@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protokół Przejęcia Maszyny – Automat Spec</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --navy: #1A2B45;
+    --navy-mid: #243656;
+    --gold: #C8972A;
+    --gold-light: #F0C96A;
+    --cream: #F7F5F0;
+    --white: #FFFFFF;
+    --gray-100: #F2F1EE;
+    --gray-200: #E2E0DB;
+    --gray-400: #9A9590;
+    --gray-700: #4A4540;
+    --red: #C0392B;
+    --green: #1E7A4A;
+    --shadow: 0 2px 12px rgba(26,43,69,0.10);
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--cream);
+    color: var(--gray-700);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 20px 24px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(26,43,69,0.25);
+  }
+
+  header .logo-mark {
+    width: 40px;
+    height: 40px;
+    background: var(--gold);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--navy);
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    line-height: 1.2;
+  }
+
+  header p {
+    font-size: 12px;
+    color: var(--gold-light);
+    margin-top: 2px;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  /* ── SEKCJE ── */
+  .section {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-header .icon {
+    font-size: 16px;
+  }
+
+  .section-body {
+    padding: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .section-body.single {
+    grid-template-columns: 1fr;
+  }
+
+  /* ── POLA ── */
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .field.full {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--navy-mid);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  textarea,
+  select {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--gray-700);
+    background: var(--gray-100);
+    border: 1.5px solid var(--gray-200);
+    border-radius: 7px;
+    padding: 10px 12px;
+    width: 100%;
+    transition: border-color 0.15s, background 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: var(--white);
+  }
+
+  input[type="number"] {
+    font-family: 'DM Mono', monospace;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  /* ── TAK/NIE ── */
+  .toggle-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  .toggle-group input[type="radio"] {
+    display: none;
+  }
+
+  .toggle-group label {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    border-radius: 7px;
+    border: 1.5px solid var(--gray-200);
+    background: var(--gray-100);
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--gray-700);
+  }
+
+  .toggle-group input[type="radio"]:checked + label {
+    border-color: var(--gold);
+    background: var(--gold);
+    color: var(--navy);
+  }
+
+  /* ── PODŁĄCZENIE ── */
+  .conn-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  .conn-group input[type="radio"] { display: none; }
+
+  .conn-group label {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    border-radius: 7px;
+    border: 1.5px solid var(--gray-200);
+    background: var(--gray-100);
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--gray-700);
+  }
+
+  .conn-group input[type="radio"]:checked + label {
+    border-color: var(--navy);
+    background: var(--navy);
+    color: var(--white);
+  }
+
+  /* ── TABELA PRODUKTÓW ── */
+  .products-intro {
+    padding: 12px 18px 0;
+    font-size: 13px;
+    color: var(--gray-400);
+  }
+
+  .products-table-wrap {
+    padding: 14px 18px 18px;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    background: var(--navy);
+    color: var(--white);
+    padding: 9px 8px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  tbody tr:nth-child(even) { background: var(--gray-100); }
+  tbody tr:nth-child(odd) { background: var(--white); }
+
+  tbody td {
+    padding: 6px 6px;
+    vertical-align: middle;
+  }
+
+  tbody td input[type="text"],
+  tbody td input[type="number"],
+  tbody td select {
+    font-size: 13px;
+    padding: 7px 8px;
+    background: transparent;
+    border-color: var(--gray-200);
+  }
+
+  tbody td input[type="text"]:focus,
+  tbody td input[type="number"]:focus,
+  tbody td select:focus {
+    background: var(--white);
+  }
+
+  .btn-add-row {
+    margin-top: 10px;
+    background: none;
+    border: 1.5px dashed var(--gold);
+    color: var(--gold);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 7px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .btn-add-row:hover {
+    background: var(--gold);
+    color: var(--navy);
+  }
+
+  .btn-del-row {
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+
+  .btn-del-row:hover { color: var(--red); }
+
+  /* ── STATUS PRODUKTU ── */
+  select.status-select { min-width: 120px; }
+
+  option.opt-brak { color: var(--red); }
+  option.opt-puste { color: #E67E22; }
+  option.opt-ok { color: var(--green); }
+
+  /* ── WYŚLIJ ── */
+  .submit-bar {
+    padding: 18px;
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-submit {
+    flex: 1;
+    min-width: 180px;
+    background: var(--gold);
+    color: var(--navy);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    letter-spacing: -0.2px;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .btn-submit:hover { background: var(--gold-light); }
+  .btn-submit:active { transform: scale(0.98); }
+
+  .btn-reset {
+    background: none;
+    border: 1.5px solid var(--gray-200);
+    color: var(--gray-400);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 14px 18px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .btn-reset:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--navy);
+    color: var(--white);
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), opacity 0.3s;
+    opacity: 0;
+    z-index: 999;
+    max-width: 90vw;
+    text-align: center;
+  }
+
+  #toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  #toast.error { background: var(--red); }
+
+  /* ── SPINNER ── */
+  .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--navy);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── PODPIS ── */
+  .sig-note {
+    padding: 14px 18px;
+    font-size: 12px;
+    color: var(--gray-400);
+    border-top: 1px solid var(--gray-200);
+    text-align: center;
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 500px) {
+    .section-body { grid-template-columns: 1fr; }
+    .field.full { grid-column: 1; }
+    thead th:nth-child(4),
+    tbody td:nth-child(4) { display: none; } /* ukryj cenę na małym */
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">AS</div>
+  <div>
+    <h1>Protokół Przejęcia Maszyny</h1>
+    <p>Celtic Cafe → Automat Spec</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ── 1. LOKALIZACJA ── -->
+  <div class="section">
+    <div class="section-header"><span class="icon">📍</span> Lokalizacja</div>
+    <div class="section-body">
+      <div class="field full">
+        <label>Nazwa lokalizacji</label>
+        <input type="text" id="lokalizacja" placeholder="np. NGK Ceramics" required>
+      </div>
+      <div class="field">
+        <label>Miasto</label>
+        <input type="text" id="miasto" placeholder="np. Gliwice">
+      </div>
+      <div class="field">
+        <label>Ulica i numer</label>
+        <input type="text" id="ulica" placeholder="np. Gutenberga 6">
+      </div>
+      <div class="field full">
+        <label>Opis miejsca ustawienia maszyny</label>
+        <input type="text" id="opis_miejsca" placeholder="np. Kantyna Główna">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2. DANE MASZYNY ── -->
+  <div class="section">
+    <div class="section-header"><span class="icon">🤖</span> Dane Maszyny</div>
+    <div class="section-body">
+      <div class="field">
+        <label>Model maszyny</label>
+        <input type="text" id="model" placeholder="np. Necta Sleva">
+      </div>
+      <div class="field">
+        <label>Numer seryjny automatu</label>
+        <input type="text" id="nr_seryjny" placeholder="np. 43901300">
+      </div>
+      <div class="field">
+        <label>Numer Mokka</label>
+        <input type="text" id="nr_mokka" placeholder="opcjonalny">
+      </div>
+      <div class="field">
+        <label>Numer Automat Spec</label>
+        <input type="text" id="nr_as" placeholder="np. GA 4646">
+      </div>
+      <div class="field full">
+        <label>Typ maszyny</label>
+        <div class="conn-group">
+          <input type="radio" name="typ_maszyny" id="tm_kawomat" value="Kawomat">
+          <label for="tm_kawomat">☕ Kawomat</label>
+          <input type="radio" name="typ_maszyny" id="tm_glassfront" value="Glassfront">
+          <label for="tm_glassfront">🥤 Glassfront</label>
+          <input type="radio" name="typ_maszyny" id="tm_inny" value="Inny">
+          <label for="tm_inny">📦 Inny</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. WRZUTNIK ── -->
+  <div class="section">
+    <div class="section-header"><span class="icon">💰</span> Wrzutnik i Liczniki</div>
+    <div class="section-body">
+      <div class="field">
+        <label>Wartość kasy w tubach wrzutnika (zł)</label>
+        <input type="number" id="kasa_tuby" step="0.01" placeholder="0.00">
+      </div>
+      <div class="field">
+        <label>Numer seryjny wrzutnika</label>
+        <input type="text" id="nr_ser_wrzutnik" placeholder="np. 2688YA0U466">
+      </div>
+      <div class="field">
+        <label>Numer stikera na wrzutniku</label>
+        <input type="text" id="nr_stiker" placeholder="np. 8464">
+      </div>
+      <div class="field">
+        <label>Licznik Total</label>
+        <input type="number" id="licznik_total" placeholder="np. 34663">
+      </div>
+      <div class="field full">
+        <label>Kasa Total (zł)</label>
+        <input type="number" id="kasa_total" step="0.01" placeholder="np. 101547.30">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4. WYPOSAŻENIE ── -->
+  <div class="section">
+    <div class="section-header"><span class="icon">⚙️</span> Wyposażenie i Podłączenie</div>
+    <div class="section-body">
+
+      <div class="field">
+        <label>Czytnik kart płatniczych?</label>
+        <div class="toggle-group">
+          <input type="radio" name="czytnik_kart" id="ck_tak" value="TAK">
+          <label for="ck_tak">TAK</label>
+          <input type="radio" name="czytnik_kart" id="ck_nie" value="NIE">
+          <label for="ck_nie">NIE</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Czytnik banknotów?</label>
+        <div class="toggle-group">
+          <input type="radio" name="czytnik_banknotow" id="cb_tak" value="TAK">
+          <label for="cb_tak">TAK</label>
+          <input type="radio" name="czytnik_banknotow" id="cb_nie" value="NIE">
+          <label for="cb_nie">NIE</label>
+        </div>
+      </div>
+
+      <div class="field full">
+        <label>Numer TID czytnika</label>
+        <input type="text" id="nr_tid" placeholder="np. 02G51780 (demontowany), 03B64934 (pozostający)">
+      </div>
+
+      <div class="field full">
+        <label>Podłączenie wody</label>
+        <div class="conn-group">
+          <input type="radio" name="woda" id="w_stale" value="Stałe">
+          <label for="w_stale">💧 Stałe</label>
+          <input type="radio" name="woda" id="w_baniak" value="Baniak">
+          <label for="w_baniak">🪣 Baniak</label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 5. UWAGI TECHNICZNE ── -->
+  <div class="section">
+    <div class="section-header"><span class="icon">🔧</span> Uwagi przy Wymianie</div>
+    <div class="section-body single">
+      <div class="field">
+        <label>Uwagi (schody, drzwi, dostęp, inne)</label>
+        <textarea id="uwagi" placeholder="np. Parking, płasko, wąskie drzwi, bez przeszkód, mało miejsca na fasadę"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 6. PRODUKTY KAWOMAT ── -->
+  <div class="section" id="section-kawomat">
+    <div class="section-header"><span class="icon">☕</span> Lista Produktów – Kawomat</div>
+    <p class="products-intro">Uzupełnij listę produktów załadowanych w maszynie kawowej.</p>
+    <div class="products-table-wrap">
+      <table id="table-kawomat">
+        <thead>
+          <tr>
+            <th>Produkt</th>
+            <th>Ilość</th>
+            <th>Poj. sprężyny</th>
+            <th>Cena (zł)</th>
+            <th>Dostępność</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-kawomat">
+          <!-- wiersze generowane przez JS -->
+        </tbody>
+      </table>
+      <button type="button" class="btn-add-row" onclick="addRow('kawomat')">＋ Dodaj produkt</button>
+    </div>
+  </div>
+
+  <!-- ── 7. PRODUKTY GLASSFRONT ── -->
+  <div class="section" id="section-glassfront">
+    <div class="section-header"><span class="icon">🥤</span> Lista Produktów – Glassfront</div>
+    <p class="products-intro">Uzupełnij listę produktów załadowanych w maszynie glassfront.</p>
+    <div class="products-table-wrap">
+      <table id="table-glassfront">
+        <thead>
+          <tr>
+            <th>Produkt</th>
+            <th>Ilość</th>
+            <th>Poj. sprężyny</th>
+            <th>Cena (zł)</th>
+            <th>Dostępność</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-glassfront">
+          <!-- wiersze generowane przez JS -->
+        </tbody>
+      </table>
+      <button type="button" class="btn-add-row" onclick="addRow('glassfront')">＋ Dodaj produkt</button>
+    </div>
+  </div>
+
+  <!-- ── 8. DATA I WYSYŁKA ── -->
+  <div class="section">
+    <div class="section-header"><span class="icon">📅</span> Przekazanie</div>
+    <div class="section-body">
+      <div class="field">
+        <label>Data przekazania</label>
+        <input type="date" id="data_przekazania">
+      </div>
+      <div class="field">
+        <label>Podpis osoby zdającej (imię i nazwisko)</label>
+        <input type="text" id="podpis_zdajacy" placeholder="np. Jan Kowalski">
+      </div>
+      <div class="field full">
+        <label>Podpis osoby odbierającej (imię i nazwisko)</label>
+        <input type="text" id="podpis_odbierajacy" placeholder="np. Anna Nowak">
+      </div>
+    </div>
+    <div class="submit-bar">
+      <button class="btn-submit" onclick="submitForm()" id="btn-wyslij">📤 Wyślij protokół</button>
+      <button class="btn-reset" onclick="resetForm()">Wyczyść formularz</button>
+    </div>
+    <p class="sig-note">Formularz zostanie wysłany na: karolina.nowotnik@automatspec.pl</p>
+  </div>
+
+</div><!-- /container -->
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  GOOGLE APPS SCRIPT URL – wklej po wdrożeniu
+// ══════════════════════════════════════════════════════
+const APPS_SCRIPT_URL = "WKLEJ_TUTAJ_URL_APPS_SCRIPT";
+
+// ── Produkty domyślne ── (uzupełnij przed wdrożeniem)
+const produktyKawomat = [
+  "Kawa ziarnista 1 kg",
+  "Mleko w proszku",
+  "Cukier biały",
+  "Kakao",
+  "Herbata czarna",
+  // dodaj kolejne...
+];
+
+const produktyGlassfront = [
+  "Woda 500ml",
+  "Sok pomarańczowy 330ml",
+  "Napój energetyczny 250ml",
+  "Sok jabłkowy 300ml",
+  // dodaj kolejne...
+];
+
+// ── Inicjalizacja tabel ──
+function initTables() {
+  produktyKawomat.forEach(p => addRow('kawomat', p));
+  produktyGlassfront.forEach(p => addRow('glassfront', p));
+  // Jeśli brak predefiniowanych – dodaj puste wiersze startowe
+  if (!produktyKawomat.length) { addRow('kawomat'); addRow('kawomat'); }
+  if (!produktyGlassfront.length) { addRow('glassfront'); addRow('glassfront'); }
+}
+
+function addRow(type, productName = '') {
+  const tbody = document.getElementById(`tbody-${type}`);
+  const idx = tbody.querySelectorAll('tr').length;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" placeholder="Nazwa produktu" value="${productName}" style="min-width:120px"></td>
+    <td><input type="number" placeholder="0" min="0" style="width:64px"></td>
+    <td><input type="text" placeholder="np. 10" style="width:80px"></td>
+    <td><input type="number" step="0.01" placeholder="0.00" style="width:80px"></td>
+    <td>
+      <select class="status-select">
+        <option value="OK" class="opt-ok">✅ OK</option>
+        <option value="Puste" class="opt-puste">⚠️ Puste</option>
+        <option value="Brak" class="opt-brak">❌ Brak</option>
+      </select>
+    </td>
+    <td><button type="button" class="btn-del-row" onclick="this.closest('tr').remove()" title="Usuń wiersz">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+// ── Zbierz dane z tabeli ──
+function collectTableData(type) {
+  const rows = document.querySelectorAll(`#tbody-${type} tr`);
+  return Array.from(rows).map(tr => {
+    const cells = tr.querySelectorAll('td');
+    return {
+      produkt: cells[0].querySelector('input').value || '',
+      ilosc: cells[1].querySelector('input').value || '',
+      pojemnosc: cells[2].querySelector('input').value || '',
+      cena: cells[3].querySelector('input').value || '',
+      dostepnosc: cells[4].querySelector('select').value || ''
+    };
+  }).filter(r => r.produkt);
+}
+
+// ── Zbierz dane formularza ──
+function collectFormData() {
+  const val = id => (document.getElementById(id) || {}).value || '';
+  const radio = name => {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : '';
+  };
+  return {
+    lokalizacja: val('lokalizacja'),
+    miasto: val('miasto'),
+    ulica: val('ulica'),
+    opis_miejsca: val('opis_miejsca'),
+    model: val('model'),
+    nr_seryjny: val('nr_seryjny'),
+    nr_mokka: val('nr_mokka'),
+    nr_as: val('nr_as'),
+    typ_maszyny: radio('typ_maszyny'),
+    kasa_tuby: val('kasa_tuby'),
+    nr_ser_wrzutnik: val('nr_ser_wrzutnik'),
+    nr_stiker: val('nr_stiker'),
+    licznik_total: val('licznik_total'),
+    kasa_total: val('kasa_total'),
+    czytnik_kart: radio('czytnik_kart'),
+    czytnik_banknotow: radio('czytnik_banknotow'),
+    nr_tid: val('nr_tid'),
+    woda: radio('woda'),
+    uwagi: val('uwagi'),
+    data_przekazania: val('data_przekazania'),
+    podpis_zdajacy: val('podpis_zdajacy'),
+    podpis_odbierajacy: val('podpis_odbierajacy'),
+    produkty_kawomat: collectTableData('kawomat'),
+    produkty_glassfront: collectTableData('glassfront')
+  };
+}
+
+// ── Walidacja ──
+function validate(data) {
+  if (!data.lokalizacja) return 'Podaj nazwę lokalizacji.';
+  if (!data.nr_as) return 'Podaj numer Automat Spec.';
+  if (!data.data_przekazania) return 'Wybierz datę przekazania.';
+  return null;
+}
+
+// ── Wyślij formularz ──
+async function submitForm() {
+  const data = collectFormData();
+  const err = validate(data);
+  if (err) { showToast(err, true); return; }
+
+  const btn = document.getElementById('btn-wyslij');
+  btn.innerHTML = '<span class="spinner"></span>Wysyłanie…';
+  btn.disabled = true;
+
+  try {
+    // Sprawdź czy URL jest ustawiony
+    if (APPS_SCRIPT_URL === "WKLEJ_TUTAJ_URL_APPS_SCRIPT") {
+      // TRYB DEMO – symulacja wysyłki
+      await new Promise(r => setTimeout(r, 1200));
+      showToast('✅ [DEMO] Protokół wysłany! (skonfiguruj Apps Script URL)');
+      resetForm();
+    } else {
+      const resp = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      showToast('✅ Protokół wysłany na karolina.nowotnik@automatspec.pl');
+      resetForm();
+    }
+  } catch(e) {
+    showToast('❌ Błąd wysyłki. Sprawdź połączenie.', true);
+  } finally {
+    btn.innerHTML = '📤 Wyślij protokół';
+    btn.disabled = false;
+  }
+}
+
+// ── Reset formularza ──
+function resetForm() {
+  // Pola tekstowe, liczby, daty
+  ['lokalizacja','miasto','ulica','opis_miejsca','model','nr_seryjny',
+   'nr_mokka','nr_as','kasa_tuby','nr_ser_wrzutnik','nr_stiker',
+   'licznik_total','kasa_total','nr_tid','uwagi','data_przekazania',
+   'podpis_zdajacy','podpis_odbierajacy'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  // Radiobuttons
+  document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+  // Tabele produktów
+  document.getElementById('tbody-kawomat').innerHTML = '';
+  document.getElementById('tbody-glassfront').innerHTML = '';
+  initTables();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Toast ──
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = ''; }, 3800);
+}
+
+// ── Ustaw dzisiejszą datę domyślnie ──
+document.getElementById('data_przekazania').valueAsDate = new Date();
+
+// ── Start ──
+initTables();
+</script>
+</body>
+</html>
