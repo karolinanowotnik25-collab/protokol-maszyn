@@ -133,7 +133,7 @@
     font-size: 12.5px; padding: 7px 8px; background: transparent; border-color: var(--gray-200); width: 100%;
   }
   tbody td input:focus, tbody td select:focus { background: var(--white); }
-  tbody td select.prod-select { min-width: 200px; }
+  tbody td input[data-role="prod-input"] { min-width: 200px; }
   tbody td .mbd-readonly {
     font-family: 'DM Mono', monospace; font-size: 12.5px; padding: 7px 8px; color: var(--blue);
     background: #EAF1F9; border-radius: 6px; text-align: center; font-weight: 600; min-width: 50px;
@@ -229,8 +229,10 @@
           <option value="">— wybierz model —</option>
           <option value="Solid 10">Solid 10</option>
           <option value="Solid 8">Solid 8</option>
+          <option value="Solid 12">Solid 12</option>
           <option value="Europa">Europa</option>
           <option value="Luce">Luce</option>
+          <option value="Fas">Fas</option>
           <option value="Ekspres De Longhi Eletta ECAM">Ekspres De Longhi Eletta ECAM</option>
           <option value="Dystrybutor do wody Prime Eco Star">Dystrybutor do wody Prime Eco Star</option>
         </select>
@@ -238,11 +240,12 @@
       <div class="field"><label>Numer seryjny automatu</label><input type="text" id="nr_seryjny" placeholder="np. 43901300"></div>
       <div class="field"><label>Numer Old</label><input type="text" id="nr_old" placeholder="opcjonalny"></div>
       <div class="field"><label>Numer Automat Spec</label><input type="text" id="nr_as" placeholder="np. GA 4646"></div>
-      <div class="field">
+      <div class="field full">
         <label>Typ maszyny</label>
         <div class="conn-group">
           <input type="radio" name="typ_maszyny" id="tm_kawomat" value="Kawomat"><label for="tm_kawomat">☕ Kawomat</label>
           <input type="radio" name="typ_maszyny" id="tm_glassfront" value="Glassfront"><label for="tm_glassfront">🥤 Glassfront</label>
+          <input type="radio" name="typ_maszyny" id="tm_inny" value="Inny"><label for="tm_inny">📦 Inny</label>
         </div>
       </div>
     </div>
@@ -279,7 +282,7 @@
         </div>
       </div>
       <div class="field"><label>Nr TID czytnika – demontowany</label><input type="text" id="nr_tid_demontowany" placeholder="np. 02G51780"></div>
-      <div class="field"><label>Nr TID czytnika – montowany</label><input type="text" id="nr_tid_montowany" placeholder="np. 03B64934"></div>
+      <div class="field"><label>Nr TID czytnika – montowany</label><input type="text" inputmode="numeric" id="nr_tid_montowany" placeholder="np. 03B64934"></div>
       <div class="field full">
         <label>Podłączenie wody</label>
         <div class="conn-group">
@@ -472,29 +475,35 @@ const sprezynaMBDMap = {
 };
 
 // ── GLASSFRONT ROW ──
-function buildGlassfrontOptions(selectedId) {
-  let opts = `<option value="">— wybierz produkt —</option>`;
+// Wspólna lista <datalist> z podpowiedziami nazw produktów (autouzupełnianie)
+function buildGlassfrontDatalist() {
+  let opts = '';
   produktyGlassfrontDB.forEach(p => {
-    opts += `<option value="${p.id}" data-name="${p.name.replace(/"/g, '&quot;')}" ${p.id === selectedId ? 'selected' : ''}>${p.id} — ${p.name}</option>`;
+    opts += `<option value="${p.name.replace(/"/g, '&quot;')}"></option>`;
   });
-  opts += `<option value="__custom__">➕ Inny produkt (wpisz ręcznie)</option>`;
   return opts;
 }
+
+// Mapa nazwa (lowercase) → produkt, do szybkiego dopasowania ID po wpisaniu nazwy
+const produktyGlassfrontByName = {};
+produktyGlassfrontDB.forEach(p => { produktyGlassfrontByName[p.name.toLowerCase()] = p; });
+
+let glassfrontRowCounter = 0;
 
 function addGlassfrontRow() {
   const tbody = document.getElementById('tbody-glassfront');
   const tr = document.createElement('tr');
+  glassfrontRowCounter++;
+  const listId = `gf-products-list-${glassfrontRowCounter}`;
   tr.innerHTML = `
     <td><span class="id-apro-readonly" data-role="id-apro">—</span></td>
     <td>
-      <select class="prod-select" data-role="prod-select" onchange="onGlassfrontProductChange(this)">
-        ${buildGlassfrontOptions('')}
-      </select>
-      <input type="text" data-role="custom-name" placeholder="Nazwa własnego produktu" style="display:none;margin-top:4px;">
+      <input type="text" data-role="prod-input" list="${listId}" placeholder="Zacznij wpisywać np. &quot;zup&quot;…" autocomplete="off" oninput="onGlassfrontProductInput(this)" style="min-width:180px">
+      <datalist id="${listId}">${buildGlassfrontDatalist()}</datalist>
     </td>
     <td><input type="number" data-role="ilosc" placeholder="0" min="0" style="width:60px"></td>
     <td><input type="number" data-role="nr-sprezyny" placeholder="np. 10" min="1" style="width:70px" oninput="onSprezynaChange(this)"></td>
-    <td><input type="text" data-role="poj-sprezyny" placeholder="np. 10 szt." style="width:85px"></td>
+    <td><input type="text" inputmode="numeric" data-role="poj-sprezyny" placeholder="np. 10 szt." style="width:85px"></td>
     <td><input type="number" step="0.01" data-role="cena" placeholder="0.00" style="width:75px"></td>
     <td><span class="mbd-readonly" data-role="mbd-code">—</span></td>
     <td><button type="button" class="btn-del-row" onclick="this.closest('tr').remove()" title="Usuń wiersz">✕</button></td>
@@ -502,20 +511,11 @@ function addGlassfrontRow() {
   tbody.appendChild(tr);
 }
 
-function onGlassfrontProductChange(selectEl) {
-  const tr = selectEl.closest('tr');
+function onGlassfrontProductInput(inputEl) {
+  const tr = inputEl.closest('tr');
   const idAproSpan = tr.querySelector('[data-role="id-apro"]');
-  const customInput = tr.querySelector('[data-role="custom-name"]');
-  if (selectEl.value === '__custom__') {
-    customInput.style.display = 'block';
-    idAproSpan.textContent = '—';
-  } else if (selectEl.value === '') {
-    customInput.style.display = 'none';
-    idAproSpan.textContent = '—';
-  } else {
-    customInput.style.display = 'none';
-    idAproSpan.textContent = selectEl.value;
-  }
+  const match = produktyGlassfrontByName[inputEl.value.trim().toLowerCase()];
+  idAproSpan.textContent = match ? match.id : '—';
 }
 
 function onSprezynaChange(inputEl) {
@@ -532,15 +532,10 @@ function onSprezynaChange(inputEl) {
 function collectGlassfrontData() {
   const rows = document.querySelectorAll('#tbody-glassfront tr');
   return Array.from(rows).map(tr => {
-    const select = tr.querySelector('[data-role="prod-select"]');
-    const customInput = tr.querySelector('[data-role="custom-name"]');
-    let idApro = '', nazwa = '';
-    if (select.value === '__custom__') {
-      idApro = ''; nazwa = customInput.value;
-    } else if (select.value !== '') {
-      idApro = select.value;
-      nazwa = select.options[select.selectedIndex].getAttribute('data-name') || '';
-    }
+    const input = tr.querySelector('[data-role="prod-input"]');
+    const nazwa = input.value.trim();
+    const match = produktyGlassfrontByName[nazwa.toLowerCase()];
+    const idApro = match ? match.id : '';
     return {
       id_apro: idApro,
       produkt: nazwa,
@@ -559,7 +554,7 @@ function addKawomatConfigRow() {
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td><input type="text" data-role="nazwa" placeholder="np. Espresso" style="min-width:120px"></td>
-    <td><input type="text" data-role="pojemnosc" placeholder="np. 150 ml" style="width:90px"></td>
+    <td><input type="text" inputmode="numeric" data-role="pojemnosc" placeholder="np. 150 ml" style="width:90px"></td>
     <td><input type="number" step="0.01" data-role="cena" placeholder="0.00" style="width:80px"></td>
     <td><button type="button" class="btn-del-row" onclick="this.closest('tr').remove()" title="Usuń wiersz">✕</button></td>
   `;
@@ -581,8 +576,8 @@ function addKawomatProduktRow(productName = '') {
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td><input type="text" data-role="produkt" placeholder="Nazwa produktu" value="${productName}" style="min-width:120px"></td>
-    <td><input type="text" data-role="stan" placeholder="np. pełny / 50% / pusty" style="width:140px"></td>
-    <td><input type="text" data-role="pojemnosc" placeholder="np. 1 kg" style="width:90px"></td>
+    <td><input type="number" data-role="stan" placeholder="np. 50" min="0" max="100" style="width:90px"> <span style="font-size:11px;color:#9A9590;">%</span></td>
+    <td><input type="text" inputmode="numeric" data-role="pojemnosc" placeholder="np. 1 kg" style="width:90px"></td>
     <td><button type="button" class="btn-del-row" onclick="this.closest('tr').remove()" title="Usuń wiersz">✕</button></td>
   `;
   tbody.appendChild(tr);
