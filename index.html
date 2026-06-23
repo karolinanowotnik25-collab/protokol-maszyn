@@ -596,7 +596,7 @@ function collectKawomatProduktyData() {
 function initTables() {
   for (let i = 0; i < 3; i++) addGlassfrontRow();
   for (let i = 0; i < 3; i++) addKawomatConfigRow();
-  ['Kawa ziarnista 1 kg', 'Mleko w proszku', 'Cukier biały', 'Kakao'].forEach(p => addKawomatProduktRow(p));
+  for (let i = 0; i < 4; i++) addKawomatProduktRow();
 }
 
 // ── Zbierz dane formularza ──
