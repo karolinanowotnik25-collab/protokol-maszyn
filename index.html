@@ -14,20 +14,14 @@
     --gold-light: #F0C96A;
     --cream: #F7F5F0;
     --white: #FFFFFF;
-    --gray-100: #F2F1EE;
     --gray-200: #E2E0DB;
     --gray-400: #9A9590;
     --gray-700: #4A4540;
-    --red: #C0392B;
-    --green: #1E7A4A;
-    --blue: #2563A8;
     --shadow: 0 2px 12px rgba(26,43,69,0.10);
     --radius: 10px;
   }
 
-  /* Force consistent rendering regardless of device width - desktop-equivalent layout always */
   html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   body {
@@ -37,11 +31,6 @@
     min-height: 100vh;
   }
 
-  .viewport-frame {
-    max-width: 760px;
-    margin: 0 auto;
-  }
-
   header {
     background: var(--navy);
     color: var(--white);
@@ -49,151 +38,43 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
     box-shadow: 0 2px 16px rgba(26,43,69,0.25);
   }
-
   header .logo-mark {
-    width: 38px;
-    height: 38px;
-    background: var(--gold);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    font-size: 13px;
-    color: var(--navy);
-    flex-shrink: 0;
+    width: 38px; height: 38px; background: var(--gold); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace; font-weight: 500; font-size: 13px; color: var(--navy); flex-shrink: 0;
   }
-
   header h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; line-height: 1.2; }
   header p { font-size: 11.5px; color: var(--gold-light); margin-top: 2px; }
 
-  .container { max-width: 700px; margin: 0 auto; padding: 20px 14px 60px; }
+  .container { max-width: 560px; margin: 0 auto; padding: 40px 18px 60px; }
+  .intro { text-align: center; margin-bottom: 28px; }
+  .intro h2 { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 8px; letter-spacing: -0.3px; }
+  .intro p { font-size: 13.5px; color: var(--gray-400); }
 
-  .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; overflow: hidden; }
+  .choice-card {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 20px 18px; margin-bottom: 16px; text-decoration: none; color: inherit;
+    border: 1.5px solid var(--gray-200); transition: border-color .15s, transform .1s;
+  }
+  .choice-card:hover { border-color: var(--gold); }
+  .choice-card:active { transform: scale(.99); }
 
-  .section-header {
-    background: var(--navy); color: var(--white); padding: 11px 16px;
-    font-size: 12.5px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  .choice-icon {
+    width: 52px; height: 52px; border-radius: 12px; background: var(--navy);
+    display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0;
   }
-  .section-header-left { display: flex; align-items: center; gap: 8px; }
-  .section-header .icon { font-size: 15px; }
-  .section-sub { font-size: 10.5px; font-weight: 400; color: var(--gold-light); text-transform: none; letter-spacing: 0; opacity: 0.85; }
+  .choice-text { flex: 1; min-width: 0; }
+  .choice-text h3 { font-size: 15.5px; font-weight: 700; color: var(--navy); margin-bottom: 3px; letter-spacing: -0.2px; }
+  .choice-text p { font-size: 12.5px; color: var(--gray-400); line-height: 1.4; }
+  .choice-arrow { font-size: 20px; color: var(--gold); flex-shrink: 0; }
 
-  .section-body { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
-  .section-body.single { grid-template-columns: 1fr; }
-  .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-  .field.full { grid-column: 1 / -1; }
-
-  label { font-size: 11px; font-weight: 600; color: var(--navy-mid); letter-spacing: 0.3px; text-transform: uppercase; }
-
-  input[type="text"], input[type="number"], input[type="date"], textarea, select {
-    font-family: 'Inter', sans-serif; font-size: 15px; color: var(--gray-700);
-    background: var(--gray-100); border: 1.5px solid var(--gray-200); border-radius: 7px;
-    padding: 10px 12px; width: 100%; transition: border-color .15s, background .15s;
-    -webkit-appearance: none; appearance: none;
+  .footer-note {
+    text-align: center; font-size: 11.5px; color: var(--gray-400); margin-top: 24px; padding-top: 20px;
+    border-top: 1px solid var(--gray-200);
   }
-  select {
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239A9590' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
-    padding-right: 32px;
-  }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); background: var(--white); }
-  input[type="number"] { font-family: 'DM Mono', monospace; }
-  textarea { resize: vertical; min-height: 76px; }
-
-  .toggle-group, .conn-group { display: flex; gap: 8px; }
-  .toggle-group input[type="radio"], .conn-group input[type="radio"] { display: none; }
-  .toggle-group label, .conn-group label {
-    flex: 1; text-align: center; padding: 10px 0; border-radius: 7px; border: 1.5px solid var(--gray-200);
-    background: var(--gray-100); font-size: 13.5px; font-weight: 600; text-transform: none; letter-spacing: 0;
-    cursor: pointer; transition: all .15s; color: var(--gray-700);
-  }
-  .toggle-group input[type="radio"]:checked + label { border-color: var(--gold); background: var(--gold); color: var(--navy); }
-  .conn-group input[type="radio"]:checked + label { border-color: var(--navy); background: var(--navy); color: var(--white); }
-
-  .products-intro { padding: 11px 16px 0; font-size: 12.5px; color: var(--gray-400); }
-  .products-table-wrap { padding: 13px 16px 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-
-  table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 560px; }
-  thead th {
-    background: var(--navy); color: var(--white); padding: 8px 7px; text-align: left;
-    font-size: 10.5px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; white-space: nowrap;
-  }
-  tbody tr:nth-child(even) { background: var(--gray-100); }
-  tbody tr:nth-child(odd) { background: var(--white); }
-  tbody td { padding: 5px; vertical-align: middle; }
-  tbody td input, tbody td select {
-    font-size: 12.5px; padding: 7px 8px; background: transparent; border-color: var(--gray-200); width: 100%;
-  }
-  tbody td input:focus, tbody td select:focus { background: var(--white); }
-  tbody td input[data-role="prod-input"] { min-width: 200px; }
-  tbody td .mbd-readonly {
-    font-family: 'DM Mono', monospace; font-size: 12.5px; padding: 7px 8px; color: var(--blue);
-    background: #EAF1F9; border-radius: 6px; text-align: center; font-weight: 600; min-width: 50px;
-  }
-  tbody td .id-apro-readonly {
-    font-family: 'DM Mono', monospace; font-size: 12px; padding: 7px 6px; color: var(--gray-400);
-    text-align: center;
-  }
-
-  .btn-add-row {
-    margin-top: 9px; background: none; border: 1.5px dashed var(--gold); color: var(--gold);
-    font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; padding: 8px 14px;
-    border-radius: 7px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background .15s, color .15s;
-  }
-  .btn-add-row:hover { background: var(--gold); color: var(--navy); }
-  .btn-del-row {
-    background: none; border: none; color: var(--gray-400); font-size: 17px; cursor: pointer;
-    line-height: 1; padding: 2px 4px; border-radius: 4px; transition: color .15s;
-  }
-  .btn-del-row:hover { color: var(--red); }
-
-  .submit-bar { padding: 16px; border-top: 1px solid var(--gray-200); display: flex; gap: 10px; flex-wrap: wrap; }
-  .btn-submit {
-    flex: 1; min-width: 170px; background: var(--gold); color: var(--navy); font-family: 'Inter', sans-serif;
-    font-size: 14.5px; font-weight: 700; padding: 14px 18px; border: none; border-radius: 9px; cursor: pointer;
-    letter-spacing: -0.2px; transition: background .15s, transform .1s;
-  }
-  .btn-submit:hover { background: var(--gold-light); }
-  .btn-submit:active { transform: scale(.98); }
-  .btn-reset {
-    background: none; border: 1.5px solid var(--gray-200); color: var(--gray-400); font-family: 'Inter', sans-serif;
-    font-size: 13.5px; font-weight: 500; padding: 14px 16px; border-radius: 9px; cursor: pointer;
-    transition: border-color .15s, color .15s;
-  }
-  .btn-reset:hover { border-color: var(--red); color: var(--red); }
-
-  #toast {
-    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(80px);
-    background: var(--navy); color: var(--white); padding: 13px 22px; border-radius: 10px; font-size: 13.5px;
-    font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,.25); transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
-    opacity: 0; z-index: 999; max-width: 90vw; text-align: center;
-  }
-  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-  #toast.error { background: var(--red); }
-
-  .spinner {
-    display: inline-block; width: 15px; height: 15px; border: 2px solid var(--navy); border-top-color: transparent;
-    border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .sig-note { padding: 13px 16px; font-size: 11.5px; color: var(--gray-400); border-top: 1px solid var(--gray-200); text-align: center; }
-
-  .info-banner {
-    background: #EAF1F9; border-left: 3px solid var(--blue); padding: 9px 12px; border-radius: 6px;
-    font-size: 12px; color: var(--navy-mid); margin: 0 16px 12px; display: flex; gap: 7px; align-items: flex-start;
-  }
-
-  /* IMPORTANT: do NOT apply mobile-specific column hiding or layout changes.
-     The form intentionally renders the same on phones as on desktop (horizontal scroll on tables instead). */
 </style>
 </head>
 <body>
@@ -207,422 +88,31 @@
 </header>
 
 <div class="container">
-
-  <!-- 1. LOKALIZACJA -->
-  <div class="section">
-    <div class="section-header"><div class="section-header-left"><span class="icon">📍</span> Lokalizacja</div></div>
-    <div class="section-body">
-      <div class="field full"><label>Nazwa lokalizacji</label><input type="text" id="lokalizacja" placeholder="np. XYZ " required></div>
-      <div class="field"><label>Miasto</label><input type="text" id="miasto" placeholder="....."></div>
-      <div class="field"><label>Ulica i numer</label><input type="text" id="ulica" placeholder="....."></div>
-      <div class="field full"><label>Opis miejsca ustawienia maszyny</label><input type="text" id="opis_miejsca" placeholder="np. Kantyna Główna"></div>
-    </div>
+  <div class="intro">
+    <h2>Wybierz rodzaj maszyny</h2>
+    <p>Wybór otworzy odpowiedni formularz protokołu.</p>
   </div>
 
-  <!-- 2. DANE MASZYNY -->
-  <div class="section">
-    <div class="section-header"><div class="section-header-left"><span class="icon">🤖</span> Dane Maszyny</div></div>
-    <div class="section-body">
-      <div class="field full">
-        <label>Model maszyny</label>
-        <select id="model">
-          <option value="">— wybierz model —</option>
-          <option value="Solid 10">Glassfront 1</option>
-          <option value="Solid 8">Glassfront 2</option>
-          <option value="Solid 12">Glassfront 3</option>
-          <option value="Europa">Glassfront 4</option>
-          <option value="Luce">Kawomat 1</option>
-          <option value="Fas">Kawomat 2</option>
-          <option value="Ekspres De Longhi Eletta ECAM">Ekspres </option>
-          <option value="Dystrybutor do wody Prime Eco Star">Dystrybutor</option>
-        </select>
-      </div>
-      <div class="field"><label>Numer seryjny automatu</label><input type="text" id="nr_seryjny" placeholder="np. 43901300"></div>
-      <div class="field"><label>Numer Old</label><input type="text" id="nr_old" placeholder="opcjonalny"></div>
-      <div class="field"><label>Numer Automat Spec</label><input type="text" id="nr_as" placeholder="np. GA 4646"></div>
-      <div class="field full">
-        <label>Typ maszyny</label>
-        <div class="conn-group">
-          <input type="radio" name="typ_maszyny" id="tm_kawomat" value="Kawomat"><label for="tm_kawomat"> Kawomat</label>
-          <input type="radio" name="typ_maszyny" id="tm_glassfront" value="Glassfront"><label for="tm_glassfront">Glassfront</label>
-          <input type="radio" name="typ_maszyny" id="tm_inny" value="Inny"><label for="tm_inny">Inny</label>
-        </div>
-      </div>
+  <a class="choice-card" href="protokol_kawomaty.html">
+    <div class="choice-icon">☕</div>
+    <div class="choice-text">
+      <h3>Kawomaty · Ekspresy · Dystrybutory</h3>
+      <p>Konfiguracja napojów, stan surowców, dane maszyny</p>
     </div>
-  </div>
+    <div class="choice-arrow">→</div>
+  </a>
 
-  <!-- 3. WRZUTNIK -->
-  <div class="section">
-    <div class="section-header"><div class="section-header-left"><span class="icon">💰</span> Wrzutnik i Liczniki</div></div>
-    <div class="section-body">
-      <div class="field"><label>Wartość kasy w tubach wrzutnika (zł)</label><input type="number" id="kasa_tuby" step="0.01" placeholder="0.00"></div>
-      <div class="field"><label>Numer seryjny wrzutnika</label><input type="text" id="nr_ser_wrzutnik" placeholder="np. 2688YA0U466"></div>
-      <div class="field"><label>Numer stikera na wrzutniku</label><input type="text" id="nr_stiker" placeholder="np. 8464"></div>
-      <div class="field"><label>Licznik Total</label><input type="number" id="licznik_total" placeholder="np. 34663"></div>
-      <div class="field full"><label>Kasa Total (zł)</label><input type="number" id="kasa_total" step="0.01" placeholder="np. 101547.30"></div>
+  <a class="choice-card" href="protokol_glassfronty.html">
+    <div class="choice-icon">🥤</div>
+    <div class="choice-text">
+      <h3>Glassfronty</h3>
+      <p>Lista produktów, sprężyny, kody MBD, dane maszyny</p>
     </div>
-  </div>
+    <div class="choice-arrow">→</div>
+  </a>
 
-  <!-- 4. WYPOSAŻENIE -->
-  <div class="section">
-    <div class="section-header"><div class="section-header-left"><span class="icon">⚙️</span> Wyposażenie i Podłączenie</div></div>
-    <div class="section-body">
-      <div class="field">
-        <label>Czytnik kart płatniczych?</label>
-        <div class="toggle-group">
-          <input type="radio" name="czytnik_kart" id="ck_tak" value="TAK"><label for="ck_tak">TAK</label>
-          <input type="radio" name="czytnik_kart" id="ck_nie" value="NIE"><label for="ck_nie">NIE</label>
-        </div>
-      </div>
-      <div class="field">
-        <label>Czytnik banknotów?</label>
-        <div class="toggle-group">
-          <input type="radio" name="czytnik_banknotow" id="cb_tak" value="TAK"><label for="cb_tak">TAK</label>
-          <input type="radio" name="czytnik_banknotow" id="cb_nie" value="NIE"><label for="cb_nie">NIE</label>
-        </div>
-      </div>
-      <div class="field"><label>Nr TID czytnika – demontowany</label><input type="text" id="nr_tid_demontowany" placeholder="np. 02G51780"></div>
-      <div class="field"><label>Nr TID czytnika – montowany</label><input type="text" inputmode="numeric" id="nr_tid_montowany" placeholder="np. 03B64934"></div>
-      <div class="field full">
-        <label>Podłączenie wody</label>
-        <div class="conn-group">
-          <input type="radio" name="woda" id="w_stale" value="Stałe"><label for="w_stale">Stałe</label>
-          <input type="radio" name="woda" id="w_baniak" value="Baniak"><label for="w_baniak">Baniak</label>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 5. UWAGI -->
-  <div class="section">
-    <div class="section-header"><div class="section-header-left"><span class="icon">🔧</span> Uwagi przy Wymianie</div></div>
-    <div class="section-body single">
-      <div class="field">
-        <label>Uwagi (schody, drzwi, dostęp, inne)</label>
-        <textarea id="uwagi" placeholder="np. Parking, płasko, wąskie drzwi, bez przeszkód, mało miejsca na fasadę"></textarea>
-      </div>
-    </div>
-  </div>
-
-  <!-- 6. PRODUKTY GLASSFRONT -->
-  <div class="section" id="section-glassfront">
-    <div class="section-header">
-      <div class="section-header-left"><span class="icon">🥤</span> Produkty – Glassfront</div>
-    </div>
-    <p class="products-intro">Wybierz produkt z listy (ID + nazwa) lub dodaj własny. Po wpisaniu nr sprężyny kod MBD uzupełni się automatycznie.</p>
-    <div class="products-table-wrap">
-      <table id="table-glassfront">
-        <thead>
-          <tr>
-            <th>ID </th>
-            <th>Produkt</th>
-            <th>Ilość</th>
-            <th>Nr sprężyny</th>
-            <th>Poj. sprężyny</th>
-            <th>Cena (zł)</th>
-            <th>MBD Code</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="tbody-glassfront"></tbody>
-      </table>
-      <button type="button" class="btn-add-row" onclick="addGlassfrontRow()">＋ Dodaj produkt</button>
-    </div>
-  </div>
-
-  <!-- 7. KAWOMAT - KONFIGURACJA -->
-  <div class="section" id="section-kawomat-config">
-    <div class="section-header">
-      <div class="section-header-left"><span class="icon">⚗️</span> Kawomat – Konfiguracja</div>
-    </div>
-    <p class="products-intro">Stałe ustawienia maszyny: dostępne wybory napojów, ceny i pojemności kubków.</p>
-    <div class="products-table-wrap">
-      <table id="table-kawomat-config">
-        <thead>
-          <tr><th>Nazwa wyboru</th><th>Pojemność kubka</th><th>Cena (zł)</th><th></th></tr>
-        </thead>
-        <tbody id="tbody-kawomat-config"></tbody>
-      </table>
-      <button type="button" class="btn-add-row" onclick="addKawomatConfigRow()">＋ Dodaj wybór</button>
-    </div>
-  </div>
-
-  <!-- 8. KAWOMAT - PRODUKTY -->
-  <div class="section" id="section-kawomat-produkty">
-    <div class="section-header">
-      <div class="section-header-left"><span class="icon">☕</span> Kawomat – Produkty</div>
-    </div>
-    <p class="products-intro">Aktualny stan surowców (kawa, mleko, cukier itd.) załadowanych w maszynie.</p>
-    <div class="products-table-wrap">
-      <table id="table-kawomat-produkty">
-        <thead>
-          <tr><th>Produkt</th><th>Stan</th><th>Pojemność</th><th></th></tr>
-        </thead>
-        <tbody id="tbody-kawomat-produkty"></tbody>
-      </table>
-      <button type="button" class="btn-add-row" onclick="addKawomatProduktRow()">＋ Dodaj produkt</button>
-    </div>
-  </div>
-
-  <!-- 9. PRZEKAZANIE -->
-  <div class="section">
-    <div class="section-header"><div class="section-header-left"><span class="icon">📅</span> Przekazanie</div></div>
-    <div class="section-body">
-      <div class="field"><label>Data przekazania</label><input type="date" id="data_przekazania"></div>
-      <div class="field"><label>Podpis osoby zdającej</label><input type="text" id="podpis_zdajacy" placeholder="np. Jan Kowalski"></div>
-      <div class="field full"><label>Podpis osoby odbierającej</label><input type="text" id="podpis_odbierajacy" placeholder="np. Anna Nowak"></div>
-    </div>
-    <div class="submit-bar">
-      <button class="btn-submit" onclick="submitForm()" id="btn-wyslij">📤 Wyślij protokół</button>
-      <button class="btn-reset" onclick="resetForm()">Wyczyść formularz</button>
-    </div>
-    <p class="sig-note">Formularz zostanie wysłany na: karolina.nowotnik@automatspec.pl</p>
-  </div>
-
+  <p class="footer-note">Każdy protokół wysyłany jest automatycznie na karolina.nowotnik@automatspec.pl</p>
 </div>
 
-<div id="toast"></div>
-
-<script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbRm9TS32I_o9NkXlYAz4fwgCMG7WuH5OJVq9b6OxootfzVUh80j6TCkYRiBUVzAKL/exec";
-
-// ── Baza produktów Glassfront (ID Apro + nazwa) ──
-const produktyGlassfrontDB = [
-  { id: '153', name: "3 bit" },
-  { id: '27492', name: "4 Move SK 0,5l" },
-  { id: '28348', name: "Lubella ciastko zbożowe 34g" }
-];
-
-// ── Mapa: nr sprężyny → MBD Code ──
-const sprezynaMBDMap = {
-  1: 10, 2: 12, 3: 14, 4: 16, 5: 18, 6: 20, 7: 22, 8: 23, 9: 24, 10: 25,
-  11: 26, 12: 27, 13: 28, 14: 29, 15: 30, 16: 31, 17: 32, 18: 33, 19: 34, 20: 35,
-  21: 36, 22: 37, 23: 38, 24: 39, 25: 40, 26: 41, 27: 42, 28: 43, 29: 44, 30: 46,
-  31: 47, 32: 48, 33: 49, 34: 50, 35: 51, 36: 52, 37: 53, 38: 54, 39: 55, 40: 56,
-  41: 57, 42: 58, 43: 59, 44: 60, 45: 61, 46: 62, 47: 63, 48: 64, 49: 60, 50: 66,
-  51: 67, 53: 68, 55: 69
-};
-
-// ── GLASSFRONT ROW ──
-// Wspólna lista <datalist> z podpowiedziami nazw produktów (autouzupełnianie)
-function buildGlassfrontDatalist() {
-  let opts = '';
-  produktyGlassfrontDB.forEach(p => {
-    opts += `<option value="${p.name.replace(/"/g, '&quot;')}"></option>`;
-  });
-  return opts;
-}
-
-// Mapa nazwa (lowercase) → produkt, do szybkiego dopasowania ID po wpisaniu nazwy
-const produktyGlassfrontByName = {};
-produktyGlassfrontDB.forEach(p => { produktyGlassfrontByName[p.name.toLowerCase()] = p; });
-
-let glassfrontRowCounter = 0;
-
-function addGlassfrontRow() {
-  const tbody = document.getElementById('tbody-glassfront');
-  const tr = document.createElement('tr');
-  glassfrontRowCounter++;
-  const listId = `gf-products-list-${glassfrontRowCounter}`;
-  tr.innerHTML = `
-    <td><span class="id-apro-readonly" data-role="id-apro">—</span></td>
-    <td>
-      <input type="text" data-role="prod-input" list="${listId}" placeholder="Zacznij wpisywać np. &quot;zup&quot;…" autocomplete="off" oninput="onGlassfrontProductInput(this)" style="min-width:180px">
-      <datalist id="${listId}">${buildGlassfrontDatalist()}</datalist>
-    </td>
-    <td><input type="number" data-role="ilosc" placeholder="0" min="0" style="width:60px"></td>
-    <td><input type="number" data-role="nr-sprezyny" placeholder="np. 10" min="1" style="width:70px" oninput="onSprezynaChange(this)"></td>
-    <td><input type="text" inputmode="numeric" data-role="poj-sprezyny" placeholder="np. 10 szt." style="width:85px"></td>
-    <td><input type="number" step="0.01" data-role="cena" placeholder="0.00" style="width:75px"></td>
-    <td><span class="mbd-readonly" data-role="mbd-code">—</span></td>
-    <td><button type="button" class="btn-del-row" onclick="this.closest('tr').remove()" title="Usuń wiersz">✕</button></td>
-  `;
-  tbody.appendChild(tr);
-}
-
-function onGlassfrontProductInput(inputEl) {
-  const tr = inputEl.closest('tr');
-  const idAproSpan = tr.querySelector('[data-role="id-apro"]');
-  const match = produktyGlassfrontByName[inputEl.value.trim().toLowerCase()];
-  idAproSpan.textContent = match ? match.id : '—';
-}
-
-function onSprezynaChange(inputEl) {
-  const tr = inputEl.closest('tr');
-  const mbdSpan = tr.querySelector('[data-role="mbd-code"]');
-  const val = parseInt(inputEl.value, 10);
-  if (sprezynaMBDMap.hasOwnProperty(val)) {
-    mbdSpan.textContent = sprezynaMBDMap[val];
-  } else {
-    mbdSpan.textContent = '—';
-  }
-}
-
-function collectGlassfrontData() {
-  const rows = document.querySelectorAll('#tbody-glassfront tr');
-  return Array.from(rows).map(tr => {
-    const input = tr.querySelector('[data-role="prod-input"]');
-    const nazwa = input.value.trim();
-    const match = produktyGlassfrontByName[nazwa.toLowerCase()];
-    const idApro = match ? match.id : '';
-    return {
-      id_apro: idApro,
-      produkt: nazwa,
-      ilosc: tr.querySelector('[data-role="ilosc"]').value || '',
-      nr_sprezyny: tr.querySelector('[data-role="nr-sprezyny"]').value || '',
-      poj_sprezyny: tr.querySelector('[data-role="poj-sprezyny"]').value || '',
-      cena: tr.querySelector('[data-role="cena"]').value || '',
-      mbd_code: tr.querySelector('[data-role="mbd-code"]').textContent.trim()
-    };
-  }).filter(r => r.produkt);
-}
-
-// ── KAWOMAT KONFIGURACJA ──
-function addKawomatConfigRow() {
-  const tbody = document.getElementById('tbody-kawomat-config');
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><input type="text" data-role="nazwa" placeholder="np. Espresso" style="min-width:120px"></td>
-    <td><input type="text" inputmode="numeric" data-role="pojemnosc" placeholder="np. 150 ml" style="width:90px"></td>
-    <td><input type="number" step="0.01" data-role="cena" placeholder="0.00" style="width:80px"></td>
-    <td><button type="button" class="btn-del-row" onclick="this.closest('tr').remove()" title="Usuń wiersz">✕</button></td>
-  `;
-  tbody.appendChild(tr);
-}
-
-function collectKawomatConfigData() {
-  const rows = document.querySelectorAll('#tbody-kawomat-config tr');
-  return Array.from(rows).map(tr => ({
-    nazwa_wyboru: tr.querySelector('[data-role="nazwa"]').value || '',
-    pojemnosc_kubka: tr.querySelector('[data-role="pojemnosc"]').value || '',
-    cena: tr.querySelector('[data-role="cena"]').value || ''
-  })).filter(r => r.nazwa_wyboru);
-}
-
-// ── KAWOMAT PRODUKTY ──
-function addKawomatProduktRow(productName = '') {
-  const tbody = document.getElementById('tbody-kawomat-produkty');
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><input type="text" data-role="produkt" placeholder="Nazwa produktu" value="${productName}" style="min-width:120px"></td>
-    <td><input type="number" data-role="stan" placeholder="np. 50" min="0" max="100" style="width:90px"> <span style="font-size:11px;color:#9A9590;">%</span></td>
-    <td><input type="text" inputmode="numeric" data-role="pojemnosc" placeholder="np. 1 kg" style="width:90px"></td>
-    <td><button type="button" class="btn-del-row" onclick="this.closest('tr').remove()" title="Usuń wiersz">✕</button></td>
-  `;
-  tbody.appendChild(tr);
-}
-
-function collectKawomatProduktyData() {
-  const rows = document.querySelectorAll('#tbody-kawomat-produkty tr');
-  return Array.from(rows).map(tr => ({
-    produkt: tr.querySelector('[data-role="produkt"]').value || '',
-    stan: tr.querySelector('[data-role="stan"]').value || '',
-    pojemnosc: tr.querySelector('[data-role="pojemnosc"]').value || ''
-  })).filter(r => r.produkt);
-}
-
-// ── Init tables with starter rows ──
-function initTables() {
-  for (let i = 0; i < 3; i++) addGlassfrontRow();
-  for (let i = 0; i < 3; i++) addKawomatConfigRow();
-  for (let i = 0; i < 4; i++) addKawomatProduktRow();
-}
-
-// ── Zbierz dane formularza ──
-function collectFormData() {
-  const val = id => (document.getElementById(id) || {}).value || '';
-  const radio = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ''; };
-  return {
-    lokalizacja: val('lokalizacja'),
-    miasto: val('miasto'),
-    ulica: val('ulica'),
-    opis_miejsca: val('opis_miejsca'),
-    model: val('model'),
-    nr_seryjny: val('nr_seryjny'),
-    nr_old: val('nr_old'),
-    nr_as: val('nr_as'),
-    typ_maszyny: radio('typ_maszyny'),
-    kasa_tuby: val('kasa_tuby'),
-    nr_ser_wrzutnik: val('nr_ser_wrzutnik'),
-    nr_stiker: val('nr_stiker'),
-    licznik_total: val('licznik_total'),
-    kasa_total: val('kasa_total'),
-    czytnik_kart: radio('czytnik_kart'),
-    czytnik_banknotow: radio('czytnik_banknotow'),
-    nr_tid_demontowany: val('nr_tid_demontowany'),
-    nr_tid_montowany: val('nr_tid_montowany'),
-    woda: radio('woda'),
-    uwagi: val('uwagi'),
-    data_przekazania: val('data_przekazania'),
-    podpis_zdajacy: val('podpis_zdajacy'),
-    podpis_odbierajacy: val('podpis_odbierajacy'),
-    produkty_glassfront: collectGlassfrontData(),
-    kawomat_konfiguracja: collectKawomatConfigData(),
-    kawomat_produkty: collectKawomatProduktyData()
-  };
-}
-
-function validate(data) {
-  if (!data.lokalizacja) return 'Podaj nazwę lokalizacji.';
-  if (!data.nr_as) return 'Podaj numer Automat Spec.';
-  if (!data.data_przekazania) return 'Wybierz datę przekazania.';
-  return null;
-}
-
-async function submitForm() {
-  const data = collectFormData();
-  const err = validate(data);
-  if (err) { showToast(err, true); return; }
-
-  const btn = document.getElementById('btn-wyslij');
-  btn.innerHTML = '<span class="spinner"></span>Wysyłanie…';
-  btn.disabled = true;
-
-  try {
-    if (APPS_SCRIPT_URL === "WKLEJ_TUTAJ_URL_APPS_SCRIPT") {
-      await new Promise(r => setTimeout(r, 1200));
-      showToast('✅ [DEMO] Protokół wysłany! (skonfiguruj Apps Script URL)');
-      resetForm();
-    } else {
-      await fetch(APPS_SCRIPT_URL, {
-        method: 'POST', mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      showToast('✅ Protokół wysłany na karolina.nowotnik@automatspec.pl');
-      resetForm();
-    }
-  } catch(e) {
-    showToast('❌ Błąd wysyłki. Sprawdź połączenie.', true);
-  } finally {
-    btn.innerHTML = '📤 Wyślij protokół';
-    btn.disabled = false;
-  }
-}
-
-function resetForm() {
-  ['lokalizacja','miasto','ulica','opis_miejsca','nr_seryjny','nr_old','nr_as',
-   'kasa_tuby','nr_ser_wrzutnik','nr_stiker','licznik_total','kasa_total',
-   'nr_tid_demontowany','nr_tid_montowany','uwagi','data_przekazania',
-   'podpis_zdajacy','podpis_odbierajacy'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('model').value = '';
-  document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
-  document.getElementById('tbody-glassfront').innerHTML = '';
-  document.getElementById('tbody-kawomat-config').innerHTML = '';
-  document.getElementById('tbody-kawomat-produkty').innerHTML = '';
-  initTables();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function showToast(msg, isError = false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show' + (isError ? ' error' : '');
-  setTimeout(() => { t.className = ''; }, 3800);
-}
-
-document.getElementById('data_przekazania').valueAsDate = new Date();
-initTables();
-</script>
 </body>
 </html>
