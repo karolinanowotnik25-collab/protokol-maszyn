@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Protokół Przejęcia Maszyny – Glassfronty – Automat Spec</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --navy: #1A2B45;
+    --navy-mid: #243656;
+    --gold: #C8972A;
+    --gold-light: #F0C96A;
+    --cream: #F7F5F0;
+    --white: #FFFFFF;
+    --gray-100: #F2F1EE;
+    --gray-200: #E2E0DB;
+    --gray-400: #9A9590;
+    --gray-700: #4A4540;
+    --red: #C0392B;
+    --green: #1E7A4A;
+    --blue: #2563A8;
+    --shadow: 0 2px 12px rgba(26,43,69,0.10);
+    --radius: 10px;
+  }
+
+  /* Force consistent rendering regardless of device width - desktop-equivalent layout always */
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--cream);
+    color: var(--gray-700);
+    min-height: 100vh;
+  }
+
+  .viewport-frame {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 18px 20px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(26,43,69,0.25);
+  }
+
+  header .logo-mark {
+    width: 38px;
+    height: 38px;
+    background: var(--gold);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--navy);
+    flex-shrink: 0;
+  }
+
+  header h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; line-height: 1.2; }
+  header p { font-size: 11.5px; color: var(--gold-light); margin-top: 2px; }
+
+  .container { max-width: 700px; margin: 0 auto; padding: 20px 14px 60px; }
+
+  .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; overflow: hidden; }
+
+  .section-header {
+    background: var(--navy); color: var(--white); padding: 11px 16px;
+    font-size: 12.5px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .section-header-left { display: flex; align-items: center; gap: 8px; }
+  .section-header .icon { font-size: 15px; }
+  .section-sub { font-size: 10.5px; font-weight: 400; color: var(--gold-light); text-transform: none; letter-spacing: 0; opacity: 0.85; }
+
+  .section-body { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+  .section-body.single { grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .field.full { grid-column: 1 / -1; }
+
+  label { font-size: 11px; font-weight: 600; color: var(--navy-mid); letter-spacing: 0.3px; text-transform: uppercase; }
+
+  input[type="text"], input[type="number"], input[type="date"], textarea, select {
+    font-family: 'Inter', sans-serif; font-size: 15px; color: var(--gray-700);
+    background: var(--gray-100); border: 1.5px solid var(--gray-200); border-radius: 7px;
+    padding: 10px 12px; width: 100%; transition: border-color .15s, background .15s;
+    -webkit-appearance: none; appearance: none;
+  }
+  select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239A9590' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
+    padding-right: 32px;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); background: var(--white); }
+  input[type="number"] { font-family: 'DM Mono', monospace; }
+  textarea { resize: vertical; min-height: 76px; }
+
+  .toggle-group, .conn-group { display: flex; gap: 8px; }
+  .toggle-group input[type="radio"], .conn-group input[type="radio"] { display: none; }
+  .toggle-group label, .conn-group label {
+    flex: 1; text-align: center; padding: 10px 0; border-radius: 7px; border: 1.5px solid var(--gray-200);
+    background: var(--gray-100); font-size: 13.5px; font-weight: 600; text-transform: none; letter-spacing: 0;
+    cursor: pointer; transition: all .15s; color: var(--gray-700);
+  }
+  .toggle-group input[type="radio"]:checked + label { border-color: var(--gold); background: var(--gold); color: var(--navy); }
+  .conn-group input[type="radio"]:checked + label { border-color: var(--navy); background: var(--navy); color: var(--white); }
+
+  .products-intro { padding: 11px 16px 0; font-size: 12.5px; color: var(--gray-400); }
+  .products-table-wrap { padding: 13px 16px 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 560px; }
+  thead th {
+    background: var(--navy); color: var(--white); padding: 8px 7px; text-align: left;
+    font-size: 10.5px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; white-space: nowrap;
+  }
+  tbody tr:nth-child(even) { background: var(--gray-100); }
+  tbody tr:nth-child(odd) { background: var(--white); }
+  tbody td { padding: 5px; vertical-align: middle; }
+  tbody td input, tbody td select {
+    font-size: 12.5px; padding: 7px 8px; background: transparent; border-color: var(--gray-200); width: 100%;
+  }
+  tbody td input:focus, tbody td select:focus { background: var(--white); }
+  tbody td input[data-role="prod-input"] { min-width: 200px; }
+  tbody td .mbd-readonly {
+    font-family: 'DM Mono', monospace; font-size: 12.5px; padding: 7px 8px; color: var(--blue);
+    background: #EAF1F9; border-radius: 6px; text-align: center; font-weight: 600; min-width: 50px;
+  }
+  tbody td .id-apro-readonly {
+    font-family: 'DM Mono', monospace; font-size: 12px; padding: 7px 6px; color: var(--gray-400);
+    text-align: center;
+  }
+  tbody td input[data-role="ean-input"] {
+    font-family: 'DM Mono', monospace; min-width: 110px;
+  }
+  tbody td input[data-role="ean-input"].ean-not-found {
+    border-color: var(--red); background: #FBEAE8;
+  }
+  tbody td input[data-role="ean-input"].ean-found {
+    border-color: var(--green); background: #EAF7EF;
+  }
+
+  .btn-add-row {
+    margin-top: 9px; background: none; border: 1.5px dashed var(--gold); color: var(--gold);
+    font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; padding: 8px 14px;
+    border-radius: 7px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background .15s, color .15s;
+  }
+  .btn-add-row:hover { background: var(--gold); color: var(--navy); }
+  .btn-del-row {
+    background: none; border: none; color: var(--gray-400); font-size: 17px; cursor: pointer;
+    line-height: 1; padding: 2px 4px; border-radius: 4px; transition: color .15s;
+  }
+  .btn-del-row:hover { color: var(--red); }
+
+  .submit-bar { padding: 16px; border-top: 1px solid var(--gray-200); display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn-submit {
+    flex: 1; min-width: 170px; background: var(--gold); color: var(--navy); font-family: 'Inter', sans-serif;
+    font-size: 14.5px; font-weight: 700; padding: 14px 18px; border: none; border-radius: 9px; cursor: pointer;
+    letter-spacing: -0.2px; transition: background .15s, transform .1s;
+  }
+  .btn-submit:hover { background: var(--gold-light); }
+  .btn-submit:active { transform: scale(.98); }
+  .btn-reset {
+    background: none; border: 1.5px solid var(--gray-200); color: var(--gray-400); font-family: 'Inter', sans-serif;
+    font-size: 13.5px; font-weight: 500; padding: 14px 16px; border-radius: 9px; cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-reset:hover { border-color: var(--red); color: var(--red); }
+
+  #toast {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--navy); color: var(--white); padding: 13px 22px; border-radius: 10px; font-size: 13.5px;
+    font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,.25); transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+    opacity: 0; z-index: 999; max-width: 90vw; text-align: center;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  #toast.error { background: var(--red); }
+
+  .spinner {
+    display: inline-block; width: 15px; height: 15px; border: 2px solid var(--navy); border-top-color: transparent;
+    border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .sig-note { padding: 13px 16px; font-size: 11.5px; color: var(--gray-400); border-top: 1px solid var(--gray-200); text-align: center; }
+
+  .info-banner {
+    background: #EAF1F9; border-left: 3px solid var(--blue); padding: 9px 12px; border-radius: 6px;
+    font-size: 12px; color: var(--navy-mid); margin: 0 16px 12px; display: flex; gap: 7px; align-items: flex-start;
+  }
+
+  /* IMPORTANT: do NOT apply mobile-specific column hiding or layout changes.
+     The form intentionally renders the same on phones as on desktop (horizontal scroll on tables instead). */
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">AS</div>
+  <div>
+    <h1>Protokół Przejęcia Maszyny</h1>
+    <p>Glassfronty</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- 1. LOKALIZACJA -->
+  <div class="section">
+    <div class="section-header"><div class="section-header-left"><span class="icon">📍</span> Lokalizacja</div></div>
+    <div class="section-body">
+      <div class="field full"><label>Nazwa lokalizacji</label><input type="text" id="lokalizacja" placeholder="np. XYZ " required></div>
+      <div class="field"><label>Miasto</label><input type="text" id="miasto" placeholder="....."></div>
+      <div class="field"><label>Ulica i numer</label><input type="text" id="ulica" placeholder="....."></div>
+      <div class="field full"><label>Opis miejsca ustawienia maszyny</label><input type="text" id="opis_miejsca" placeholder="np. Kantyna Główna"></div>
+    </div>
+  </div>
+
+  <!-- 2. DANE MASZYNY -->
+  <div class="section">
+    <div class="section-header"><div class="section-header-left"><span class="icon">🤖</span> Dane Maszyny</div></div>
+    <div class="section-body">
+      <div class="field full">
+        <label>Model maszyny</label>
+        <select id="model">
+          <option value="">— wybierz model —</option>
+          <option value="Solid 10">Glassfront 1</option>
+          <option value="Solid 8">Glassfront 2</option>
+          <option value="Solid 12">Glassfront 3</option>
+          <option value="Europa">Glassfront 4</option>
+        </select>
+      </div>
+      <div class="field"><label>Numer seryjny automatu</label><input type="text" id="nr_seryjny" placeholder="np. 43901300"></div>
+      <div class="field"><label>Numer Old</label><input type="text" id="nr_old" placeholder="opcjonalny"></div>
+      <div class="field"><label>Numer Automat Spec</label><input type="text" id="nr_as" placeholder="np. GA 4646"></div>
+      <div class="field full">
+        <label>Typ maszyny</label>
+        <div class="conn-group">
+          <input type="radio" name="typ_maszyny" id="tm_glassfront" value="Glassfront"><label for="tm_glassfront">Glassfront</label>
+          <input type="radio" name="typ_maszyny" id="tm_inny" value="Inny"><label for="tm_inny">Inny</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. WRZUTNIK -->
+  <div class="section">
+    <div class="section-header"><div class="section-header-left"><span class="icon">💰</span> Wrzutnik i Liczniki</div></div>
+    <div class="section-body">
+      <div class="field"><label>Wartość kasy w tubach wrzutnika (zł)</label><input type="number" id="kasa_tuby" step="0.01" placeholder="0.00"></div>
+      <div class="field"><label>Numer seryjny wrzutnika</label><input type="text" id="nr_ser_wrzutnik" placeholder="np. 2688YA0U466"></div>
+      <div class="field"><label>Numer stikera na wrzutniku</label><input type="text" id="nr_stiker" placeholder="np. 8464"></div>
+      <div class="field"><label>Licznik Total</label><input type="number" id="licznik_total" placeholder="np. 34663"></div>
+      <div class="field full"><label>Kasa Total (zł)</label><input type="number" id="kasa_total" step="0.01" placeholder="np. 101547.30"></div>
+    </div>
+  </div>
+
+  <!-- 4. WYPOSAŻENIE -->
+  <div class="section">
+    <div class="section-header"><div class="section-header-left"><span class="icon">⚙️</span> Wyposażenie i Podłączenie</div></div>
+    <div class="section-body">
+      <div class="field">
+        <label>Czytnik kart płatniczych?</label>
+        <div class="toggle-group">
+          <input type="radio" name="czytnik_kart" id="ck_tak" value="TAK"><label for="ck_tak">TAK</label>
+          <input type="radio" name="czytnik_kart" id="ck_nie" value="NIE"><label for="ck_nie">NIE</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Czytnik banknotów?</label>
+        <div class="toggle-group">
+          <input type="radio" name="czytnik_banknotow" id="cb_tak" value="TAK"><label for="cb_tak">TAK</label>
+          <input type="radio" name="czytnik_banknotow" id="cb_nie" value="NIE"><label for="cb_nie">NIE</label>
+        </div>
+      </div>
+      <div class="field"><label>Nr TID czytnika – demontowany</label><input type="text" id="nr_tid_demontowany" placeholder="np. 02G51780"></div>
+      <div class="field"><label>Nr TID czytnika – montowany</label><input type="text" inputmode="numeric" id="nr_tid_montowany" placeholder="np. 03B64934"></div>
+      <div class="field full">
+        <label>Podłączenie wody</label>
+        <div class="conn-group">
+          <input type="radio" name="woda" id="w_stale" value="Stałe"><label for="w_stale">Stałe</label>
+          <input type="radio" name="woda" id="w_baniak" value="Baniak"><label for="w_baniak">Baniak</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. UWAGI -->
+  <div class="section">
+    <div class="section-header"><div class="section-header-left"><span class="icon">🔧</span> Uwagi przy Wymianie</div></div>
+    <div class="section-body single">
+      <div class="field">
+        <label>Uwagi (schody, drzwi, dostęp, inne)</label>
+        <textarea id="uwagi" placeholder="np. Parking, płasko, wąskie drzwi, bez przeszkód, mało miejsca na fasadę"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. PRODUKTY GLASSFRONT -->
+  <div class="section" id="section-glassfront">
+    <div class="section-header">
+      <div class="section-header-left"><span class="icon">🥤</span> Produkty – Glassfront</div>
+    </div>
+    <p class="products-intro">Zeskanuj kod EAN (kursor w polu, skaner sam wciśnie Enter) — produkt i ID uzupełnią się automatycznie. Jeśli kod nie zostanie rozpoznany, wpisz nazwę ręcznie. Po wpisaniu nr sprężyny kod MBD uzupełni się automatycznie.</p>
+    <div class="products-table-wrap">
+      <table id="table-glassfront">
+        <thead>
+          <tr>
+            <th>Kod EAN</th>
+            <th>ID </th>
+            <th>Produkt</th>
+            <th>Ilość</th>
+            <th>Nr sprężyny</th>
+            <th>Poj. sprężyny</th>
+            <th>Cena (zł)</th>
+            <th>MBD Code</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-glassfront"></tbody>
+      </table>
+      <button type="button" class="btn-add-row" onclick="addGlassfrontRow()">＋ Dodaj produkt</button>
+    </div>
+  </div>
+
+  <!-- 9. PRZEKAZANIE -->
+  <div class="section">
+    <div class="section-header"><div class="section-header-left"><span class="icon">📅</span> Przekazanie</div></div>
+    <div class="section-body">
+      <div class="field"><label>Data przekazania</label><input type="date" id="data_przekazania"></div>
+      <div class="field"><label>Podpis osoby zdającej</label><input type="text" id="podpis_zdajacy" placeholder="np. Jan Kowalski"></div>
+      <div class="field full"><label>Podpis osoby odbierającej</label><input type="text" id="podpis_odbierajacy" placeholder="np. Anna Nowak"></div>
+    </div>
+    <div class="submit-bar">
+      <button class="btn-submit" onclick="submitForm()" id="btn-wyslij">📤 Wyślij protokół</button>
+      <button class="btn-reset" onclick="resetForm()">Wyczyść formularz</button>
+    </div>
+    <p class="sig-note">Formularz zostanie wysłany na: karolina.nowotnik@automatspec.pl</p>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbRm9TS32I_o9NkXlYAz4fwgCMG7WuH5OJVq9b6OxootfzVUh80j6TCkYRiBUVzAKL/exec";
+
+// ── Baza produktów Glassfront (Nazwa + EAN + ID Apro) ──
+const produktyGlassfrontDB = [{"name": "Burger wieprzowo - wołowy V-Resto", "ean": "5905563452233", "id": "25160"}, {"name": "Kebab z wołowiną V-Resto", "ean": "5905563452202", "id": "23325"}, {"name": "3 BIT XXL", "ean": "7622210416100", "id": "776"}, {"name": "Kubek 300ml uniwersalny", "ean": "5905280171349", "id": "25771"}, {"name": "4 Move Active Puszka Mg 0,5l", "ean": "5900552086062", "id": "20270"}, {"name": "4 Move Water 556ML Mg", "ean": "5900552077770", "id": "19696"}, {"name": "Kapsułki Nescafé Dolce Gusto Latte Macchiato 16 sztuk", "ean": "7613037491159", "id": "27709"}, {"name": "Kapsułki Nescafé Dolce Gusto Espresso Intenso 16 sztuk", "ean": "7613036867436", "id": "22710"}, {"name": "Kapsułki Nescafé Dolce Gusto Latte Macchiato Caramel 16 sztuk", "ean": "7613037788884", "id": "27711"}, {"name": "Woda Żywiec Zdrój Gaz SK 0,5l", "ean": "5900541012508", "id": "27803"}, {"name": "7 Days", "ean": "5201360521210", "id": "63"}, {"name": "Acerola, 60 tabletek do ssania", "ean": "5907553018443", "id": "18954"}, {"name": "Kawa Aroma Pieno puszka ziarno 300g", "ean": "5907614653682", "id": "17844"}, {"name": "Axpal Popcorn 15g", "ean": "5907799261658", "id": "20315"}, {"name": "Ba! Baton Kids Krówka 25g", "ean": "5900749625012", "id": "20284"}, {"name": "Ba! Baton Nuts Arachid z Czekoladą 30g", "ean": "5900749623834", "id": "21162"}, {"name": "Ba! Baton Nuts Pistacja 30g", "ean": "5900749623810", "id": "21164"}, {"name": "Bakalland Choco Baton z Białą Czekoladą 25g", "ean": "5900749642118", "id": "21168"}, {"name": "Bakalland Daktyle całe owoce 100 g", "ean": "5900749020244", "id": "22044"}, {"name": "Bakalland Migdały łuskane 40g", "ean": "5900749026093", "id": "21170"}, {"name": "Bakalland Orzechy nerkowca 40g", "ean": "5900749026239", "id": "21171"}, {"name": "Bakalland Pistacje prażone solone 40g", "ean": "5900749028042", "id": "21169"}, {"name": "Bakalland SELECTION Figi duże owoce 100g_x000D_\n", "ean": "5900749360135", "id": "22046"}, {"name": "Bakalland SELECTION Mango 70g", "ean": "5900749020862", "id": "22045"}, {"name": "Baton Dare 45g", "ean": "8690526254470", "id": "19302"}, {"name": "Baton Dobra Kaloria Kokos&Orzech 35g", "ean": "5903548002022", "id": "16190"}, {"name": "Baton Magnetic 39-43g", "ean": "5902581688118", "id": "17308"}, {"name": "Baton Vitanella 40G", "ean": "5900749639972", "id": "8863"}, {"name": "Belvita", "ean": "7622300382216", "id": "313"}, {"name": "BeRAW Baton Energy Raspberry Chocolate 40g", "ean": "5903246562552", "id": "21165"}, {"name": "BeRAW Energy Peanut Butter 40g", "ean": "5905669246583", "id": "19767"}, {"name": "BeRAW Kids Żelki Truskawka 35g", "ean": "5903246567274", "id": "21167"}, {"name": "Black Energy LIGHT puszka 0,25l", "ean": "5900552021865", "id": "13446"}, {"name": "Black Energy Drink Puszka 0,5l", "ean": "5900552079149", "id": "16511"}, {"name": "Bruschetta Maretti", "ean": "3800205871255", "id": "426"}, {"name": "Bulion Warzywny MV 405.", "ean": "5900910010807", "id": "15626"}, {"name": "Caveres Kawa ziarnista wesoło świąteczny blend kawowy 1kg", "ean": "5905280170540", "id": "20904"}, {"name": "Caveres Kawa ziarnista wesoło świąteczny blend kawowy 250g", "ean": "5905280170557", "id": "20903"}, {"name": "Caveres Kawa mielona wesoło świąteczny blend kawowy 250g", "ean": "5905280170564", "id": "20902"}, {"name": "Zestaw świąteczny blend 3x250g kawa ziarnista", "ean": "5905280170717", "id": "20911"}, {"name": "Zestaw świąteczny blend 3x250g kawa mielona", "ean": "5905280170700", "id": "20912"}, {"name": "Zestaw świąteczny blend 2x250g kawa ziarnista", "ean": "5905280170724", "id": "20913"}, {"name": "Calcium Apteo 300mg*20 Z Kwer.Sm.Pomar", "ean": "5907553014032", "id": "18956"}, {"name": "Carbo Wegiel Akt Apteo*20 Kap", "ean": "5907553018702", "id": "18958"}, {"name": "Caveres Zestaw Brazylia Santos mielona 250g + 2x Herbata", "ean": "5905280171370", "id": "27272"}, {"name": "Caveres Zestaw Brazylia Santos ziarno 250g + 2x Herbata Teekanne", "ean": "5905280171363", "id": "27271"}, {"name": "Caveres BARBER Coffee", "ean": "5907614653095", "id": "15378"}, {"name": "Caveres BARBER Coffee mielona 250g - szt.", "ean": "5907614653569", "id": "16320"}, {"name": "Caveres BARBER Coffee ziarno 250g - szt.", "ean": "5907614653163", "id": "15783"}, {"name": "Caveres BRAZIL SANTOS ziarno", "ean": "5907614653194", "id": "15344"}, {"name": "Caveres BRAZIL SANTOS mielona 250g - szt.", "ean": "5907614653439", "id": "15778"}, {"name": "Caveres BRAZIL SANTOS ziarno 250g - szt.", "ean": "5907614653316", "id": "15791"}, {"name": "Caveres COLOMBIA EXCELSO ziarno", "ean": "5907614653170", "id": "15342"}, {"name": "Caveres COLOMBIA EXCELSO mielona 250g - szt.", "ean": "5907614653415", "id": "15779"}, {"name": "Caveres COLOMBIA EXCELSO ziarno 250g - szt.", "ean": "5907614653293", "id": "15787"}, {"name": "Caveres COSTA RICA mielona 250g - szt.", "ean": "5907614653507", "id": "15817"}, {"name": "Caveres COSTA RICA ziarno", "ean": "5907614653262", "id": "15340"}, {"name": "Caveres COSTA RICA ziarno 250g - szt.", "ean": "5907614653385", "id": "15796"}, {"name": "Caveres EL SALVADOR mielona 250g - szt.", "ean": "5907614653484", "id": "15777"}, {"name": "Caveres EL SALVADOR ziarno 250g - szt.", "ean": "5907614653361", "id": "15794"}, {"name": "Caveres EL SALVADOR ziarno", "ean": "5907614653248", "id": "15338"}, {"name": "Caveres ETIOPIA SIDAMO ziarno", "ean": "5907614653279", "id": "15336"}, {"name": "Caveres ETIOPIA SIDAMO mielona 250g - szt.", "ean": "5907614653514", "id": "15819"}, {"name": "Caveres ETIOPIA SIDAMO ziarno 250g - szt.", "ean": "5907614653392", "id": "15790"}, {"name": "Caveres Guatemala mielona 250g - szt", "ean": "5907614653453", "id": "19586"}, {"name": "Caveres GUATEMALA ziarno", "ean": "5907614653217", "id": "15334"}, {"name": "Caveres GUATEMALA ziarno 250g - szt.", "ean": "5907614653330", "id": "15793"}, {"name": "Caveres HONDURAS mielona 250g - szt.", "ean": "5907614653491", "id": "15780"}, {"name": "Caveres HONDURAS ziarno", "ean": "5907614653255", "id": "15332"}, {"name": "Caveres HONDURAS ziarno 250g - szt.", "ean": "5907614653378", "id": "15792"}, {"name": "Caveres INDIA CHERRY ziarno", "ean": "5907614653187", "id": "15330"}, {"name": "Caveres INDIA CHERRY mielona 250g - szt.", "ean": "5907614653422", "id": "15816"}, {"name": "Caveres INDIA CHERRY ziarno 250g - szt.", "ean": "5907614653309", "id": "15785"}, {"name": "Caveres INDIA MONSUNED ziarno", "ean": "5907614653224", "id": "15328"}, {"name": "Caveres INDIA MONSUNED mielona 250g - szt.", "ean": "5907614653460", "id": "15815"}, {"name": "Caveres INDIA MONSUNED ziarno 250g - szt.", "ean": "5907614653347", "id": "15789"}, {"name": "Caveres PERU mielona 250g - szt.", "ean": "5907614653446", "id": "15782"}, {"name": "Caveres PERU ziarno", "ean": "5907614653200", "id": "15326"}, {"name": "Caveres TANZANIA KILIMANJARO ziarno", "ean": "5907614653286", "id": "15324"}, {"name": "Caveres TANZANIA KILIMANJARO mielona 250g - szt.", "ean": "5907614653521", "id": "15781"}, {"name": "Caveres TANZANIA KILIMANJARO ziarno 250g - szt.", "ean": "5907614653408", "id": "15788"}, {"name": "Caveres UGANDA mielona 250g - szt.", "ean": "5907614653477", "id": "15784"}, {"name": "Caveres UGANDA ziarno", "ean": "5907614653231", "id": "15322"}, {"name": "Caveres UGANDA ziarno 250g - szt.", "ean": "5907614653354", "id": "15786"}, {"name": "Caveres zestaw kaw: Brazylia, Kolumbia, Salwador", "ean": "5907614653576", "id": "15625"}, {"name": "Caveres zestaw SERCE 2x250g Brazylia Arabica/Robusta kawa mielona 500g", "ean": "5905280171035", "id": "23800"}, {"name": "Cera+ Solutions Emol.Kr.D/T 100ml", "ean": "5907553017828", "id": "18959"}, {"name": "CHIPSY LAY'S 40G", "ean": "5900259099273", "id": "9614"}, {"name": "Chusteczka Nawilżana do Higieny Intymnej - 1 sztuka", "ean": "5907222245552", "id": "19534"}, {"name": "Ciasteczka Owsiane Kokos-Czek Sante 38g", "ean": "5900617012890", "id": "15206"}, {"name": "Ciastka Milka Choco Brownie 150g", "ean": "7622210669315", "id": "16022"}, {"name": "Ciastka Pieguski Milka 135g", "ean": "5906747312107", "id": "1066"}, {"name": "Cienkopis Rystor RC-04 Czarny", "ean": "5907548912152", "id": "1359"}, {"name": "Cienkopis Rystor RC-04 Czerwony", "ean": "5907548912169", "id": "1360"}, {"name": "Cienkopis Rystor RC-04 Niebieski", "ean": "5907548912176", "id": "1361"}, {"name": "Cienkopis Rystor RC-04 Zielony", "ean": "5907548912183", "id": "1362"}, {"name": "2-phase Cleaning TABS+ 10*2g", "ean": "5904347183752", "id": "25898"}, {"name": "Coca Cola zero 0,33l", "ean": "5449000131805", "id": "363"}, {"name": "Coca Cola Zero Pet 0,5l", "ean": "5449000131836", "id": "502"}, {"name": "Coca-Cola 0,33L", "ean": "5449000000996", "id": "203"}, {"name": "Coca-cola cherry puszka 0,33L", "ean": "5449000195364", "id": "1323"}, {"name": "Cukier", "ean": "5907069001410", "id": "41"}, {"name": "cukier biały saszetka 5gx600szt", "ean": "5907069002530", "id": "832"}, {"name": "cukier biały saszetka 5gx200szt", "ean": "5907069000208", "id": "831"}, {"name": "cukier trzcinowy sasz.5gx600szt", "ean": "5907069002547", "id": "834"}, {"name": "cukier trzcinowy demerara 200szt", "ean": "5907069000543", "id": "833"}, {"name": "Czekolada biała DecoMorreno MV 106", "ean": "5900910006541", "id": "24593"}, {"name": "Czekolada DecoMorreno MV 109.", "ean": "5900910008620", "id": "15579"}, {"name": "Czekolada Gorzka Wedel 90g", "ean": "5901588018768", "id": "16195"}, {"name": "czekolada Milka", "ean": "7622201062880", "id": "805"}, {"name": "Czekolada Mokate Inst.", "ean": "5900649065666", "id": "40"}, {"name": "Delicje Szampańskie 147g", "ean": "5906747308438", "id": "15906"}, {"name": "Długopis BIC Jednorazowy czarny", "ean": "3086123001053", "id": "1363"}, {"name": "Długopis BIC Jednorazowy Niebieski", "ean": "3086123001060", "id": "1365"}, {"name": "Draże Kokosowe 70g", "ean": "5902978002428", "id": "2862"}, {"name": "Elektrolity Apteo*20 Tabl.Mus.", "ean": "5907553018290", "id": "18961"}, {"name": "Familijne Jutrzenka 180g", "ean": "5900352001883", "id": "15908"}, {"name": "Fanta 0,33L", "ean": "5449000054531", "id": "250"}, {"name": "FANTA PET 0,5L", "ean": "5000112654455", "id": "771"}, {"name": "Figaro Baton Banana 25 gr", "ean": "8585000207243", "id": "19639"}, {"name": "Gardło Miód-Cytryna , 16 Pastylek Do Ssania", "ean": "5907553013981", "id": "18963"}, {"name": "Gardło Porost Islandzki 36 Mięk Past Do Ssania", "ean": "5904012364172", "id": "18964"}, {"name": "Gladio Aloes Alo Alo 500ml", "ean": "5902596118303", "id": "19811"}, {"name": "Gorący Kubek", "ean": "8712100867620", "id": "70"}, {"name": "Guma Orbit 10 Drażetek", "ean": "50173204", "id": "450"}, {"name": "Herbapol Syrop Malina 420ml", "ean": "5900956100593", "id": "16031"}, {"name": "Herbata cytrynowa inst.", "ean": "5900649065642", "id": "98"}, {"name": "HERBATA EKLAND EARL GREY", "ean": "5900910007555", "id": "11883"}, {"name": "HERBATA EKLAND MALINOWA", "ean": "5900910009443", "id": "9609"}, {"name": "HERBATA LIPTON INST CZARNA", "ean": "8711200337286", "id": "11369"}, {"name": "Herbata Teekanne Black Label RFA 20t", "ean": "5901086002931", "id": "27598"}, {"name": "Herbata Teekanne English Breakfast RFA", "ean": "5901086001668", "id": "27597"}, {"name": "Herbata Teekanne exp Green Tea 20t", "ean": "5901086000333", "id": "16026"}, {"name": "Herbata Teekanne LOVE 20t", "ean": "5901086049301", "id": "27602"}, {"name": "Herbata Teekanne Magic Moments 20t", "ean": "5901086000913", "id": "27603"}, {"name": "Herbata Teekanne Malina z cytryną 20t", "ean": "5901086076857", "id": "27601"}, {"name": "Herbata Teekanne Mięta 20t", "ean": "5901086065363", "id": "27600"}, {"name": "Herbata Teekanne White Tea Citrus RFA 20t", "ean": "5901086001415", "id": "27599"}, {"name": "Herbata Tetley exp czarna 100t", "ean": "5014328015535", "id": "15900"}, {"name": "Herbata Tetley exp czarna 25t", "ean": "5014328083763", "id": "15899"}, {"name": "Herbata Tetley exp Earl Grey 100t", "ean": "5014328050987", "id": "16024"}, {"name": "Herbata Vitax exp miętowa 20t", "ean": "5900175431720", "id": "15902"}, {"name": "Kawa Jacobss", "ean": "8711000373385", "id": "448"}, {"name": "Jeżyki Jutrzenka 140g", "ean": "5900352002361", "id": "15907"}, {"name": "Kabanosy Tarczyński exclusiv GO 50g", "ean": "5908230514340", "id": "17296"}, {"name": "Kawa Mielona Aroma Pieno 250g - szt.", "ean": "5907614653071", "id": "14462"}, {"name": "Kawa Mielona Rosso 250g - szt.", "ean": "5907614653538", "id": "14512"}, {"name": "Kawa Mielona Turchese 250g - szt.", "ean": "5907614653545", "id": "14511"}, {"name": "Kawa Mielona Vero Gusto Classico 250g - szt.", "ean": "5907614653088", "id": "14461"}, {"name": "Kawa AG Enzo Bencini 500g AG Foods", "ean": "8594003661235", "id": "27697"}, {"name": "Kawa Bezkofeinowa Mielona 250g", "ean": "5905280170342", "id": "20331"}, {"name": "Kawa Bezkofeinowa Ziarnista 250g", "ean": "5905280170335", "id": "20330"}, {"name": "Kawa Caveres Mio Grani mielona 250g", "ean": "5905280170359", "id": "19735"}, {"name": "Kawa Caveres Mio Grani ziarno 1kg", "ean": "5905280170373", "id": "19733"}, {"name": "Kawa Caveres Mio Grani ziarno 250g", "ean": "5905280170366", "id": "19734"}, {"name": "Kawa Jacobs Cronat Gold Instant 200g", "ean": "8711000513767", "id": "15903"}, {"name": "KAWA MIELONA BRAZYLIA Arabica/Robusta 250g", "ean": "5905280170175", "id": "19300"}, {"name": "KAWA MIELONA BRAZYLIA Arabica/Robusta 100g", "ean": "5905280171028", "id": "25036"}, {"name": "Kawa Mokate To Go 500g", "ean": "5900649058873", "id": "1267"}, {"name": "Kawa Nescafee  instant_x000D_\n", "ean": "7613038540290", "id": "438"}, {"name": "Kawa Vero Gusto mielona 100g", "ean": "5905280171103", "id": "24245"}, {"name": "Kawa Vero Gusto ziarno 100g", "ean": "5905280171110", "id": "24246"}, {"name": "Kawa Ziarno Aroma Pieno 250g - szt.", "ean": "5907614653057", "id": "13898"}, {"name": "Kawa Ziarno Vero Gusto Classico 250g - szt.", "ean": "5907614653064", "id": "13896"}, {"name": "KAWA ZIARNISTA BRAZYLIA Arabica/Robusta 250g", "ean": "5905280170168", "id": "19301"}, {"name": "KAWA ZIARNISTA BRAZYLIA Arabica/Robusta 100g", "ean": "5905280171011", "id": "25037"}, {"name": "Kawa Ziarnista Rosso", "ean": "5907614653033", "id": "1262"}, {"name": "Kawa Ziarnista Turchese", "ean": "5907614653026", "id": "1261"}, {"name": "KAWA ZIARNO AROMA PIENO", "ean": "5905280171240", "id": "12216"}, {"name": "KAWA ZIARNO AROMA PIENO - CLASSICO", "ean": "5907614653019", "id": "16695"}, {"name": "Kawa Ziarno Brazylia Arabica/Robusta", "ean": "5907614653897", "id": "18166"}, {"name": "Kawa ziarno Rosso 250g - szt.", "ean": "5907614653132", "id": "15756"}, {"name": "Kawa ziarno Turchese 250g - szt.", "ean": "5907614653149", "id": "15757"}, {"name": "KAWA ZIARNO VERO GUSTO", "ean": "5905280170755", "id": "12214"}, {"name": "KAWA ZIARNO VERO GUSTO - CLASSICO", "ean": "5907614653002", "id": "16694"}, {"name": "Kotlet Drobiowy", "ean": "5901398074794", "id": "1238"}, {"name": "Kotlet Mielony 400g", "ean": "5901398072301", "id": "15016"}, {"name": "Kotlet Schabowy", "ean": "5901398074787", "id": "1239"}, {"name": "Krem Pielegnac.Z Wit.A+E Apteo Care 50m", "ean": "5907553015091", "id": "18966"}, {"name": "Kubek 150 ML papier", "ean": "5905280171318", "id": "251"}, {"name": "Kubek 300 ML", "ean": "5905280171332", "id": "255"}, {"name": "Kubek Papierowy 180 ML BIO/CUP OF PAPER 180ML", "ean": "5901460019814", "id": "15911"}, {"name": "Lion Orzechowy 40g", "ean": "7613287910561", "id": "107"}, {"name": "Herbata Lipton exp 50t", "ean": "5900300550203", "id": "14510"}, {"name": "Lipton EXP Camomile 25T", "ean": "5900300586981", "id": "16325"}, {"name": "Herbata Lipton EXP Earl Grey 25T", "ean": "3228881018403", "id": "1069"}, {"name": "Herbata Lipton EXP Eng Break 25T", "ean": "5900300586929", "id": "952"}, {"name": "Lipton EXP Green Tea Citrus 25t", "ean": "8722700167631", "id": "16198"}, {"name": "Herbata Lipton EXP Strawberry 25T", "ean": "8722700167617", "id": "951"}, {"name": "Herbata Lipton EXP Zielona Classic 25T", "ean": "8722700416364", "id": "955"}, {"name": "Herbata Lipton EXP Zielona Mint 25T", "ean": "3228881015921", "id": "956"}, {"name": "Lipton Pet 0,5l", "ean": "5900497043229", "id": "166"}, {"name": "Lipton puszka 0,33l Sleek", "ean": "5900497030267", "id": "18555"}, {"name": "Lusette Wafel 50g", "ean": "8584004031137", "id": "1190"}, {"name": "Racuchy / Łazanki 400g", "ean": "5901398062647", "id": "18865"}, {"name": "Łowicz Syrop Malina 400ml", "ean": "5900397745780", "id": "16035"}, {"name": "Magnez Apteo Skurcz*20 Tabl.Mus", "ean": "5907553017385", "id": "18967"}, {"name": "MD pet 0,5l", "ean": "5900497280501", "id": "77"}, {"name": "MD puszka 0,33l Sleek", "ean": "5900497033756", "id": "18556"}, {"name": "Kawa Jacobs Kronung mielona 500 g", "ean": "8711000525722", "id": "782"}, {"name": "Mieta Apteo Natura Fix 2g * 30 Sasz", "ean": "5907553013141", "id": "18968"}, {"name": "Mirinda Pet 0,5l", "ean": "5900497330503", "id": "79"}, {"name": "Mirinda puszka 0,33l Sleek", "ean": "5900497030236", "id": "18557"}, {"name": "Mixitki BEZ GLUTENU - Banan + Kokos", "ean": "8595685208718", "id": "26497"}, {"name": "Mixitki BEZ GLUTENU - Daktyle + Figi", "ean": "8595685202389", "id": "26495"}, {"name": "Mixitki BEZ GLUTENU - Orzechy nerkowca + Cytryna", "ean": "8595685210452", "id": "26494"}, {"name": "MLEKO 1L 2,0% BEZ LAKTOZY", "ean": "5907809284301", "id": "10448"}, {"name": "Mokate Irish Cappuccino", "ean": "5900649072510", "id": "12881"}, {"name": "Multi Flora, 20 Kapsułek", "ean": "5907553013134", "id": "18969"}, {"name": "Multiwitamina Z Magnezem Apteo*20 Tabl", "ean": "5907553013387", "id": "18970"}, {"name": "Naleśniki Danie Obiadowe", "ean": "5901398075289", "id": "1236"}, {"name": "4 Move 0,5l", "ean": "5900552047308", "id": "677"}, {"name": "Nestea Pet 0,5l", "ean": "5900334017710", "id": "733"}, {"name": "Nestea puszka 0,33l", "ean": "5900334017772", "id": "16502"}, {"name": "Nić Dent.Apteo Care Mietowa 50m Ne", "ean": "5907553019211", "id": "18971"}, {"name": "Nimm2 Śmiejżelki Owocowe 100g", "ean": "4014400907278", "id": "18163"}, {"name": "Olej Z Wątroby Rekina Forte, 60 Kapsułek", "ean": "5907553018122", "id": "18972"}, {"name": "Oshee 555 ml Lemoniada Mal&Grap", "ean": "5908260258016", "id": "18854"}, {"name": "Oshee 555 ml Min&Vit", "ean": "5908260253790", "id": "17598"}, {"name": "Oshee Baton Zbożowy", "ean": "5908260252786", "id": "676"}, {"name": "Oshee Isotonic 0,5l Multifruit", "ean": "5908260254087", "id": "1233"}, {"name": "Paluszki Solone", "ean": "5907799261825", "id": "59"}, {"name": "Paluszki Lubella 70g", "ean": "5900049041017", "id": "20264"}, {"name": "Paluszki Lubella Sezamowe 70g", "ean": "5900049041031", "id": "20632"}, {"name": "Pepsi MAX Pet 0,5l", "ean": "5900497300506", "id": "14830"}, {"name": "Pepsi MAX puszka 0,33l Sleek", "ean": "5900497030229", "id": "18558"}, {"name": "Pepsi Pet 0,5l", "ean": "5900497310505", "id": "34"}, {"name": "Pepsi puszka 0,33l Sleek", "ean": "5900497030212", "id": "18554"}, {"name": "PIEROGI RUSKIE 5%", "ean": "5901398073353", "id": "10179"}, {"name": "Pierogi z mięsem", "ean": "5901398073346", "id": "10176"}, {"name": "Placki ziemniaczane z gulaszem", "ean": "5901398068861", "id": "433"}, {"name": "Plaster Apteo N/Pecherze Zestaw*7 Szt", "ean": "5907553019617", "id": "18973"}, {"name": "Plaster D/Dzieci Apteo Sowki*12 Szt.", "ean": "5908312470946", "id": "18974"}, {"name": "Plaster D/Dzieci Kotki/Pieski*10(12) Szt", "ean": "5901986090519", "id": "18975"}, {"name": "Plaster Zestaw Turystyczny*27 Szt Apteo", "ean": "5901986090151", "id": "18976"}, {"name": "Plusssz Sport Complex 20t", "ean": "5901785307320", "id": "18775"}, {"name": "Podp.Apteo Ultra Cienkie*10 Szt", "ean": "5907553019839", "id": "18977"}, {"name": "PODPASKA BELLA PERF BLUE", "ean": "5900516305253", "id": "11947"}, {"name": "Prince Polo XXLQ", "ean": "7622210309792", "id": "197"}, {"name": "Napój RedBull Puszka", "ean": "9002490100070", "id": "204"}, {"name": "Rogal Agiberia 60g", "ean": "8594162114122", "id": "18774"}, {"name": "ROSHEN Baton karmelowy 40g", "ean": "4823077617041", "id": "19736"}, {"name": "Kawa Jacobs Kronung instant 200g", "ean": "8711000521045", "id": "783"}, {"name": "Rutyna Z Witaminami, 100 Tabletek", "ean": "5907553013721", "id": "18979"}, {"name": "Sante Go On Baton Vitamin 50g", "ean": "5900617034809", "id": "17464"}, {"name": "Sante mieszanka studencka 40g", "ean": "5900617036162", "id": "17460"}, {"name": "Sinuapteo Zatoki, 60 Kapsułek", "ean": "5907553014988", "id": "18980"}, {"name": "Snickers baton 55g", "ean": "5000159461122", "id": "11"}, {"name": "Snickers Big 75g", "ean": "5900951222849", "id": "30"}, {"name": "So Food Kurczak curry po ind. z ryż 330g", "ean": "5901002008115", "id": "19709"}, {"name": "So Food Leczo z kiełbasą z szynki 400g", "ean": "5901002008887", "id": "19713"}, {"name": "Sok Riviva 0,33l Pet", "ean": "5901088013218", "id": "17307"}, {"name": "Sonko Lekkie Wafelki 36g", "ean": "5902180630112", "id": "16116"}, {"name": "Syrop Karmelowy", "ean": "8001780303673", "id": "1112"}, {"name": "Syrop Waniliowy", "ean": "8001780303697", "id": "1111"}, {"name": "Tabletki Na Trawienie Apteo*30 Tabl.", "ean": "5907553016548", "id": "18983"}, {"name": "Tampony O.B. Procomfort Normal*8 Szt.Ne", "ean": "3574661331119", "id": "18984"}, {"name": "Tampony O.B. Procomfort Super* 8 Szt.Ne", "ean": "3574661331140", "id": "18985"}, {"name": "Tarczyn Pomidor Sok 100% 300ml", "ean": "5901067402484", "id": "15832"}, {"name": "Tiger Energy Vend Puszka 250ml", "ean": "5900334021564", "id": "21003"}, {"name": "TOMA SOK POMARAŃCZOWY", "ean": "8594004638755", "id": "867"}, {"name": "Twix Xtra", "ean": "5900951028502", "id": "342"}, {"name": "TYMBARK MUS 120G", "ean": "5900334014443", "id": "12987"}, {"name": "Tymbark Sok 100% Jabłko 300ml", "ean": "5900334001740", "id": "16448"}, {"name": "Tymbark Sok 100% Multiwitamina 300ml", "ean": "5900334001818", "id": "16156"}, {"name": "Tymbark Sok 100% Pomarańcza 300ml", "ean": "5900334001733", "id": "16155"}, {"name": "TYMBARK VITAMINI 300ML", "ean": "5900334002587", "id": "1420"}, {"name": "Unimil Prezerwatywa", "ean": "5011831083556", "id": "16197"}, {"name": "Kawa Vero Gusto puszka ziarno 300g", "ean": "5907614653699", "id": "17843"}, {"name": "Vit.D3+K2 Mk-7 Apteo*30 Kaps.", "ean": "5907553018078", "id": "18987"}, {"name": "Wafel Estella XXL 50g", "ean": "5900797008157", "id": "463"}, {"name": "Wafel Teatralny w Czekoladzie 40g", "ean": "5900056000069", "id": "17735"}, {"name": "Wieczka 80mm", "ean": "5907550721667", "id": "309"}, {"name": "Wieczko 70mm", "ean": "5901460004742", "id": "2855"}, {"name": "Wieczko 90mm", "ean": "5902686662419", "id": "1157"}, {"name": "WKŁADKA NATURELLA 20", "ean": "4015400240310", "id": "685"}, {"name": "WODA KINGA PIENIŃSKA 0,5L", "ean": "5901268004036", "id": "9980"}, {"name": "Woda Mineralna", "ean": "5900541000062", "id": "52"}, {"name": "Woda Morska Dla Dzieci 100 Ml", "ean": "5907553018597", "id": "18994"}, {"name": "Woda Morska 100 Ml", "ean": "5907553014292", "id": "18993"}, {"name": "Zestaw Caveres Kaw Świata Mielonych 3x250g - Braz, Kolu, Salw", "ean": "5905280170601", "id": "21889"}, {"name": "Zestaw Caveres 10x250g +2x250 Ziar: Kawy Świata (bez pudełka)", "ean": "5905280170267", "id": "19584"}, {"name": "Zestaw 2x 250g Vero Gusto + Teek Gold 20t Kaw", "ean": "5905280170212", "id": "19490"}, {"name": "Zestaw 4x250g Miel: Vero, Aroma, Turchese, Rosso (bez pudełka)", "ean": "5905280170243", "id": "19585"}, {"name": "ZESTAW Brazylia Arabica/Robusta 3x250g ziarno", "ean": "5905280170021", "id": "19455"}, {"name": "ZESTAW Brazylia Arabica/Robusta 3x250g Mielona", "ean": "5905280170182", "id": "19492"}, {"name": "Zestaw Caveres 2 Kaw Mielonych: Brazylia 50/50, Brazylia 50/50", "ean": "5905280170519", "id": "19819"}, {"name": "Zestaw Caveres 2 Kaw Ziarnistych: Brazylia 50/50, Brazylia 50/50", "ean": "5905280170472", "id": "19815"}, {"name": "Zestaw Caveres 2 Kaw Mielonych: Aroma, Vero", "ean": "5905280170489", "id": "19816"}, {"name": "Zestaw Caveres 2 Kaw Mielonych: Rosso, Turchese", "ean": "5905280170496", "id": "19817"}, {"name": "Zestaw Caveres 2 Kaw Ziarnistych: Rosso, Turchese", "ean": "5905280170458", "id": "19813"}, {"name": "Zestaw Caveres 4 Kaw Mielonych: Aroma, Vero, Rosso, Turchese", "ean": "5907614653613", "id": "17602"}, {"name": "Zestaw Caveres 4 Kaw Ziarnistych: Aroma, Vero, Rosso, Turchese", "ean": "5907614653606", "id": "17684"}, {"name": "Zestaw kaw mielonych Brazylia 250g Kolumbia 250g + miód gryczany", "ean": "5905280170830", "id": "22133"}, {"name": "Zestaw kaw ziarnistych Brazylia 250g Kolumbia 250g + miód gryczany", "ean": "5905280170823", "id": "22111"}, {"name": "Zupa Barszcz", "ean": "5900397740785", "id": "42"}, {"name": "Zupa  Pieczarkowa_x000D_\n", "ean": "5900397740808", "id": "99"}, {"name": "Zupka chińska", "ean": "5901882110151", "id": "104"}];
+
+// ── Mapa: nr sprężyny → MBD Code ──
+const sprezynaMBDMap = {
+  1: 10, 2: 12, 3: 14, 4: 16, 5: 18, 6: 20, 7: 22, 8: 23, 9: 24, 10: 25,
+  11: 26, 12: 27, 13: 28, 14: 29, 15: 30, 16: 31, 17: 32, 18: 33, 19: 34, 20: 35,
+  21: 36, 22: 37, 23: 38, 24: 39, 25: 40, 26: 41, 27: 42, 28: 43, 29: 44, 30: 46,
+  31: 47, 32: 48, 33: 49, 34: 50, 35: 51, 36: 52, 37: 53, 38: 54, 39: 55, 40: 56,
+  41: 57, 42: 58, 43: 59, 44: 60, 45: 61, 46: 62, 47: 63, 48: 64, 49: 60, 50: 66,
+  51: 67, 53: 68, 55: 69
+};
+
+// ── GLASSFRONT ROW ──
+// Wspólna lista <datalist> z podpowiedziami nazw produktów (autouzupełnianie)
+function buildGlassfrontDatalist() {
+  let opts = '';
+  produktyGlassfrontDB.forEach(p => {
+    opts += `<option value="${p.name.replace(/"/g, '&quot;')}"></option>`;
+  });
+  return opts;
+}
+
+// Mapy do szybkiego dopasowania: EAN → produkt, nazwa (lowercase) → produkt
+const produktyGlassfrontByEan = {};
+const produktyGlassfrontByName = {};
+produktyGlassfrontDB.forEach(p => {
+  produktyGlassfrontByEan[p.ean] = p;
+  produktyGlassfrontByName[p.name.toLowerCase()] = p;
+});
+
+let glassfrontRowCounter = 0;
+
+function addGlassfrontRow() {
+  const tbody = document.getElementById('tbody-glassfront');
+  const tr = document.createElement('tr');
+  glassfrontRowCounter++;
+  const listId = `gf-products-list-${glassfrontRowCounter}`;
+  tr.innerHTML = `
+    <td><input type="text" inputmode="numeric" data-role="ean-input" placeholder="Zeskanuj kod…" autocomplete="off" onkeydown="onEanKeydown(event, this)" onblur="onEanLookup(this)"></td>
+    <td><span class="id-apro-readonly" data-role="id-apro">—</span></td>
+    <td>
+      <input type="text" data-role="prod-input" list="${listId}" placeholder="Zacznij wpisywać np. &quot;zup&quot;…" autocomplete="off" oninput="onGlassfrontProductInput(this)" style="min-width:180px">
+      <datalist id="${listId}">${buildGlassfrontDatalist()}</datalist>
+    </td>
+    <td><input type="number" data-role="ilosc" placeholder="0" min="0" style="width:60px"></td>
+    <td><input type="number" data-role="nr-sprezyny" placeholder="np. 10" min="1" style="width:70px" oninput="onSprezynaChange(this)"></td>
+    <td><input type="text" inputmode="numeric" data-role="poj-sprezyny" placeholder="np. 10 szt." style="width:85px"></td>
+    <td><input type="number" step="0.01" data-role="cena" placeholder="0.00" style="width:75px"></td>
+    <td><span class="mbd-readonly" data-role="mbd-code">—</span></td>
+    <td><button type="button" class="btn-del-row" onclick="this.closest('tr').remove()" title="Usuń wiersz">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+// Skaner wysyła Enter po zeskanowaniu — łapiemy to zamiast czekać na blur
+function onEanKeydown(evt, inputEl) {
+  if (evt.key === 'Enter') {
+    evt.preventDefault();
+    onEanLookup(inputEl);
+  }
+}
+
+function onEanLookup(inputEl) {
+  const tr = inputEl.closest('tr');
+  const ean = inputEl.value.trim();
+  inputEl.classList.remove('ean-found', 'ean-not-found');
+  if (!ean) return;
+
+  const match = produktyGlassfrontByEan[ean];
+  const idAproSpan = tr.querySelector('[data-role="id-apro"]');
+  const prodInput = tr.querySelector('[data-role="prod-input"]');
+
+  if (match) {
+    idAproSpan.textContent = match.id;
+    prodInput.value = match.name;
+    inputEl.classList.add('ean-found');
+    tr.querySelector('[data-role="ilosc"]').focus();
+  } else {
+    idAproSpan.textContent = '—';
+    inputEl.classList.add('ean-not-found');
+    prodInput.value = '';
+    prodInput.focus();
+    showToast('Kod EAN nieznaleziony w bazie — wpisz nazwę produktu ręcznie', true);
+  }
+}
+
+function onGlassfrontProductInput(inputEl) {
+  const tr = inputEl.closest('tr');
+  const idAproSpan = tr.querySelector('[data-role="id-apro"]');
+  const eanInput = tr.querySelector('[data-role="ean-input"]');
+  const match = produktyGlassfrontByName[inputEl.value.trim().toLowerCase()];
+  idAproSpan.textContent = match ? match.id : '—';
+  if (match) {
+    eanInput.value = match.ean;
+    eanInput.classList.remove('ean-not-found');
+    eanInput.classList.add('ean-found');
+  }
+}
+
+function onSprezynaChange(inputEl) {
+  const tr = inputEl.closest('tr');
+  const mbdSpan = tr.querySelector('[data-role="mbd-code"]');
+  const val = parseInt(inputEl.value, 10);
+  if (sprezynaMBDMap.hasOwnProperty(val)) {
+    mbdSpan.textContent = sprezynaMBDMap[val];
+  } else {
+    mbdSpan.textContent = '—';
+  }
+}
+
+function collectGlassfrontData() {
+  const rows = document.querySelectorAll('#tbody-glassfront tr');
+  return Array.from(rows).map(tr => {
+    const input = tr.querySelector('[data-role="prod-input"]');
+    const nazwa = input.value.trim();
+    const match = produktyGlassfrontByName[nazwa.toLowerCase()];
+    const idApro = match ? match.id : '';
+    return {
+      ean: tr.querySelector('[data-role="ean-input"]').value.trim(),
+      id_apro: idApro,
+      produkt: nazwa,
+      ilosc: tr.querySelector('[data-role="ilosc"]').value || '',
+      nr_sprezyny: tr.querySelector('[data-role="nr-sprezyny"]').value || '',
+      poj_sprezyny: tr.querySelector('[data-role="poj-sprezyny"]').value || '',
+      cena: tr.querySelector('[data-role="cena"]').value || '',
+      mbd_code: tr.querySelector('[data-role="mbd-code"]').textContent.trim()
+    };
+  }).filter(r => r.produkt);
+}
+
+// ── Init tables with starter rows ──
+function initTables() {
+  for (let i = 0; i < 3; i++) addGlassfrontRow();
+}
+
+// ── Zbierz dane formularza ──
+function collectFormData() {
+  const val = id => (document.getElementById(id) || {}).value || '';
+  const radio = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ''; };
+  return {
+    lokalizacja: val('lokalizacja'),
+    miasto: val('miasto'),
+    ulica: val('ulica'),
+    opis_miejsca: val('opis_miejsca'),
+    model: val('model'),
+    nr_seryjny: val('nr_seryjny'),
+    nr_old: val('nr_old'),
+    nr_as: val('nr_as'),
+    typ_maszyny: radio('typ_maszyny'),
+    kasa_tuby: val('kasa_tuby'),
+    nr_ser_wrzutnik: val('nr_ser_wrzutnik'),
+    nr_stiker: val('nr_stiker'),
+    licznik_total: val('licznik_total'),
+    kasa_total: val('kasa_total'),
+    czytnik_kart: radio('czytnik_kart'),
+    czytnik_banknotow: radio('czytnik_banknotow'),
+    nr_tid_demontowany: val('nr_tid_demontowany'),
+    nr_tid_montowany: val('nr_tid_montowany'),
+    woda: radio('woda'),
+    uwagi: val('uwagi'),
+    data_przekazania: val('data_przekazania'),
+    podpis_zdajacy: val('podpis_zdajacy'),
+    podpis_odbierajacy: val('podpis_odbierajacy'),
+    produkty_glassfront: collectGlassfrontData()
+  };
+}
+
+function validate(data) {
+  if (!data.lokalizacja) return 'Podaj nazwę lokalizacji.';
+  if (!data.nr_as) return 'Podaj numer Automat Spec.';
+  if (!data.data_przekazania) return 'Wybierz datę przekazania.';
+  return null;
+}
+
+async function submitForm() {
+  const data = collectFormData();
+  const err = validate(data);
+  if (err) { showToast(err, true); return; }
+
+  const btn = document.getElementById('btn-wyslij');
+  btn.innerHTML = '<span class="spinner"></span>Wysyłanie…';
+  btn.disabled = true;
+
+  try {
+    if (APPS_SCRIPT_URL === "WKLEJ_TUTAJ_URL_APPS_SCRIPT") {
+      await new Promise(r => setTimeout(r, 1200));
+      showToast('✅ [DEMO] Protokół wysłany! (skonfiguruj Apps Script URL)');
+      resetForm();
+    } else {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      showToast('✅ Protokół wysłany na karolina.nowotnik@automatspec.pl');
+      resetForm();
+    }
+  } catch(e) {
+    showToast('❌ Błąd wysyłki. Sprawdź połączenie.', true);
+  } finally {
+    btn.innerHTML = '📤 Wyślij protokół';
+    btn.disabled = false;
+  }
+}
+
+function resetForm() {
+  ['lokalizacja','miasto','ulica','opis_miejsca','nr_seryjny','nr_old','nr_as',
+   'kasa_tuby','nr_ser_wrzutnik','nr_stiker','licznik_total','kasa_total',
+   'nr_tid_demontowany','nr_tid_montowany','uwagi','data_przekazania',
+   'podpis_zdajacy','podpis_odbierajacy'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('model').value = '';
+  document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+  document.getElementById('tbody-glassfront').innerHTML = '';
+  initTables();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = ''; }, 3800);
+}
+
+document.getElementById('data_przekazania').valueAsDate = new Date();
+initTables();
+</script>
+</body>
+</html>
