@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protokół Przejęcia Firmy — Automat Spec</title>
+<style>
+  :root{
+    --navy-deep:#0b1428;
+    --navy:#101c38;
+    --navy-soft:#182849;
+    --gold:#c9a35c;
+    --gold-soft:#e4c98a;
+    --cream:#f4f0e6;
+    --ink:#1b2436;
+    --line:#2a3a5e;
+    --ok:#4caf7d;
+    --err:#d16a5a;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    line-height:1.5;
+  }
+  header{
+    background:linear-gradient(135deg, var(--navy-deep), var(--navy) 60%, var(--navy-soft));
+    color:var(--cream);
+    padding:38px 24px 30px;
+    text-align:center;
+    border-bottom:3px solid var(--gold);
+  }
+  header .eyebrow{
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    font-size:12px;
+    color:var(--gold-soft);
+    margin-bottom:8px;
+  }
+  header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:600;
+    letter-spacing:.01em;
+  }
+  header p{
+    margin:10px 0 0;
+    font-size:14px;
+    color:#c9d2e6;
+  }
+  main{
+    max-width:880px;
+    margin:0 auto;
+    padding:28px 16px 80px;
+  }
+  .section{
+    background:#fff;
+    border:1px solid #e4ddc9;
+    border-radius:var(--radius);
+    margin-bottom:22px;
+    overflow:hidden;
+    box-shadow:0 1px 3px rgba(11,20,40,.06);
+  }
+  .section-head{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--navy);
+    color:var(--cream);
+    padding:14px 20px;
+  }
+  .section-head .step{
+    width:30px;height:30px;
+    border-radius:50%;
+    border:1.5px solid var(--gold);
+    color:var(--gold-soft);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:700;
+    flex-shrink:0;
+  }
+  .section-head h2{
+    margin:0;
+    font-size:16px;
+    font-weight:600;
+    letter-spacing:.01em;
+  }
+  .section-body{padding:20px;}
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px 16px;
+  }
+  .grid.full, .field.span2{grid-column:1/-1;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    color:#5a5238;
+    margin-bottom:5px;
+  }
+  .field input, .field select, .field textarea{
+    width:100%;
+    padding:9px 11px;
+    border:1px solid #d8d0b8;
+    border-radius:7px;
+    font-size:14px;
+    font-family:inherit;
+    background:#fffdf8;
+    color:var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none;
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(201,163,92,.18);
+  }
+  textarea{resize:vertical;min-height:64px;}
+  .repeat-list{display:flex;flex-direction:column;gap:12px;}
+  .repeat-item{
+    border:1px dashed #d8d0b8;
+    border-radius:8px;
+    padding:14px 14px 6px;
+    position:relative;
+    background:#fbf9f2;
+  }
+  .repeat-item .remove-btn{
+    position:absolute;
+    top:8px;right:8px;
+    background:none;
+    border:none;
+    color:#a24;
+    font-size:13px;
+    cursor:pointer;
+    font-weight:600;
+    padding:4px 8px;
+  }
+  .repeat-item .remove-btn:hover{text-decoration:underline;}
+  .add-btn{
+    margin-top:4px;
+    background:var(--navy);
+    color:var(--cream);
+    border:1px solid var(--navy);
+    border-radius:7px;
+    padding:9px 16px;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .add-btn:hover{background:var(--navy-soft);}
+  .add-btn.ghost{
+    background:transparent;
+    color:var(--navy);
+    border:1px solid var(--navy);
+  }
+  .add-btn.ghost:hover{background:#eee7d2;}
+  .empty-note{
+    font-size:13px;
+    color:#8b8265;
+    font-style:italic;
+    padding:6px 2px 10px;
+  }
+  .submit-wrap{
+    text-align:center;
+    margin-top:28px;
+  }
+  #submitBtn{
+    background:var(--gold);
+    color:var(--navy-deep);
+    border:none;
+    border-radius:8px;
+    padding:14px 38px;
+    font-size:15.5px;
+    font-weight:700;
+    letter-spacing:.02em;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(201,163,92,.35);
+  }
+  #submitBtn:hover{background:var(--gold-soft);}
+  #submitBtn:disabled{opacity:.6;cursor:wait;}
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:28px;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--navy-deep);
+    color:#fff;
+    padding:14px 22px;
+    border-radius:8px;
+    font-size:14px;
+    opacity:0;
+    transition:opacity .25s, transform .25s;
+    pointer-events:none;
+    border-left:4px solid var(--ok);
+    max-width:90%;
+    text-align:left;
+  }
+  .toast.err{border-left-color:var(--err);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media (max-width:640px){
+    .grid{grid-template-columns:1fr;}
+    header h1{font-size:22px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Automat Spec</div>
+  <h1>Protokół Przejęcia Firmy</h1>
+  <p>Formularz przejęcia obsługi klienta — dane handlowe, maszyny i pojazdy</p>
+</header>
+
+<main>
+  <form id="protokolForm">
+
+    <!-- SEKCJA 1: DANE FIRMY -->
+    <div class="section">
+      <div class="section-head">
+        <div class="step">1</div>
+        <h2>Dane firmy</h2>
+      </div>
+      <div class="section-body">
+        <div class="grid">
+          <div class="field span2">
+            <label for="nazwaFirmy">Nazwa firmy *</label>
+            <input type="text" id="nazwaFirmy" required>
+          </div>
+          <div class="field span2">
+            <label for="adres">Adres *</label>
+            <input type="text" id="adres" required>
+          </div>
+          <div class="field span2">
+            <label for="osobaKontaktowa">Operacyjna osoba kontaktowa (imię, nazwisko, telefon) *</label>
+            <input type="text" id="osobaKontaktowa" placeholder="np. Kasia Migiel, 666 555 444" required>
+          </div>
+          <div class="field">
+            <label for="iloscOsob">Ilość osób (u klienta)</label>
+            <input type="number" id="iloscOsob" min="0">
+          </div>
+          <div class="field">
+            <label for="czestotliwoscWizyt">Częstotliwość wizyt</label>
+            <input type="text" id="czestotliwoscWizyt" placeholder="np. 2x w tygodniu">
+          </div>
+          <div class="field">
+            <label for="doKiedyUmowa">Do kiedy umowa</label>
+            <input type="date" id="doKiedyUmowa">
+          </div>
+          <div class="field">
+            <label for="czynsz">Czynsz</label>
+            <input type="text" id="czynsz" placeholder="np. 500 zł / maszynę">
+          </div>
+          <div class="field span2">
+            <label for="konkurencja">Konkurencja</label>
+            <input type="text" id="konkurencja" placeholder="np. ABC obok nas, 2 snacki">
+          </div>
+          <div class="field span2">
+            <label for="ustalenia">Ustalenia ustne z klientem (produkty, dodatki, gadżety, promocje)</label>
+            <textarea id="ustalenia"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEKCJA 2: MASZYNY -->
+    <div class="section">
+      <div class="section-head">
+        <div class="step">2</div>
+        <h2>Maszyny u klienta</h2>
+      </div>
+      <div class="section-body">
+        <div class="empty-note" id="maszynyEmptyNote">Brak dodanych maszyn — kliknij „Dodaj maszynę”.</div>
+        <div class="repeat-list" id="maszynyList"></div>
+        <button type="button" class="add-btn" id="addMaszynaBtn" style="margin-top:12px;">+ Dodaj maszynę</button>
+      </div>
+    </div>
+
+    <div class="submit-wrap">
+      <button type="submit" id="submitBtn">Wyślij protokół</button>
+    </div>
+  </form>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Ten sam backend Apps Script co protokoły maszyn — nowy typ formularza w payloadzie.
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbRm9TS32I_o9NkXlYAz4fwgCMG7WuH5OJVq9b6OxootfzVUh80j6TCkYRiBUVzAKL/exec";
+
+let maszynaCounter = 0;
+
+const maszynyList = document.getElementById('maszynyList');
+const maszynyEmptyNote = document.getElementById('maszynyEmptyNote');
+
+function refreshEmptyNotes(){
+  maszynyEmptyNote.style.display = maszynyList.children.length ? 'none' : 'block';
+}
+
+function addMaszyna(){
+  maszynaCounter++;
+  const id = 'm' + maszynaCounter;
+  const wrap = document.createElement('div');
+  wrap.className = 'repeat-item';
+  wrap.dataset.id = id;
+  wrap.innerHTML = `
+    <button type="button" class="remove-btn" data-remove="${id}">✕ Usuń</button>
+    <div class="grid">
+      <div class="field">
+        <label>Typ urządzenia</label>
+        <select data-field="typ">
+          <option value="Snack">Snack</option>
+          <option value="Kawomat">Kawomat</option>
+          <option value="Ekspres">Ekspres</option>
+          <option value="Dystrybutor">Dystrybutor</option>
+          <option value="Inne">Inne</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Model</label>
+        <input type="text" data-field="model" placeholder="np. Bloom, Samba, Rondo">
+      </div>
+      <div class="field">
+        <label>Ilość</label>
+        <input type="number" min="0" data-field="ilosc">
+      </div>
+      <div class="field">
+        <label>Wartość sprzedaży / mc</label>
+        <input type="text" data-field="wartoscSprzedazy" placeholder="opcjonalnie">
+      </div>
+    </div>
+  `;
+  maszynyList.appendChild(wrap);
+  refreshEmptyNotes();
+}
+
+document.getElementById('addMaszynaBtn').addEventListener('click', addMaszyna);
+
+document.addEventListener('click', (e) => {
+  const removeId = e.target.getAttribute('data-remove');
+  if (removeId) {
+    const el = document.querySelector(`.repeat-item[data-id="${removeId}"]`);
+    if (el) el.remove();
+    refreshEmptyNotes();
+  }
+});
+
+function collectRepeatItems(container){
+  return Array.from(container.children).map(item => {
+    const data = {};
+    item.querySelectorAll('[data-field]').forEach(inp => {
+      data[inp.dataset.field] = inp.value.trim();
+    });
+    return data;
+  });
+}
+
+function showToast(message, isError){
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.toggle('err', !!isError);
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 4200);
+}
+
+document.getElementById('protokolForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Wysyłanie...';
+
+  const payload = {
+    formType: 'przejecie_firmy',
+    firma: {
+      nazwaFirmy: document.getElementById('nazwaFirmy').value.trim(),
+      adres: document.getElementById('adres').value.trim(),
+      osobaKontaktowa: document.getElementById('osobaKontaktowa').value.trim(),
+      iloscOsob: document.getElementById('iloscOsob').value.trim(),
+      czestotliwoscWizyt: document.getElementById('czestotliwoscWizyt').value.trim(),
+      doKiedyUmowa: document.getElementById('doKiedyUmowa').value,
+      czynsz: document.getElementById('czynsz').value.trim(),
+      konkurencja: document.getElementById('konkurencja').value.trim(),
+      ustalenia: document.getElementById('ustalenia').value.trim()
+    },
+    maszyny: collectRepeatItems(maszynyList),
+    wyslanoDnia: new Date().toISOString()
+  };
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    showToast('Protokół wysłany. Dziękujemy!', false);
+    document.getElementById('protokolForm').reset();
+    maszynyList.innerHTML = '';
+    refreshEmptyNotes();
+  } catch (err) {
+    showToast('Błąd wysyłki — sprawdź połączenie i spróbuj ponownie.', true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Wyślij protokół';
+  }
+});
+
+// start with one empty row, for convenience
+addMaszyna();
+refreshEmptyNotes();
+</script>
+
+</body>
+</html>
