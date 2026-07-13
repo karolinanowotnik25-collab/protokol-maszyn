@@ -247,10 +247,6 @@
             <label for="doKiedyUmowa">Do kiedy umowa</label>
             <input type="date" id="doKiedyUmowa">
           </div>
-          <div class="field">
-            <label for="czynsz">Czynsz</label>
-            <input type="text" id="czynsz" placeholder="np. 500 zł / maszynę">
-          </div>
           <div class="field span2">
             <label for="konkurencja">Konkurencja</label>
             <input type="text" id="konkurencja" placeholder="np. ABC obok nas, 2 snacki">
@@ -328,6 +324,10 @@ function addMaszyna(){
         <label>Wartość sprzedaży / mc</label>
         <input type="text" data-field="wartoscSprzedazy" placeholder="opcjonalnie">
       </div>
+      <div class="field">
+        <label>Czynsz</label>
+        <input type="text" data-field="czynsz" placeholder="np. 500 zł / maszynę">
+      </div>
     </div>
   `;
   maszynyList.appendChild(wrap);
@@ -378,7 +378,6 @@ document.getElementById('protokolForm').addEventListener('submit', async (e) => 
       iloscOsob: document.getElementById('iloscOsob').value.trim(),
       czestotliwoscWizyt: document.getElementById('czestotliwoscWizyt').value.trim(),
       doKiedyUmowa: document.getElementById('doKiedyUmowa').value,
-      czynsz: document.getElementById('czynsz').value.trim(),
       konkurencja: document.getElementById('konkurencja').value.trim(),
       ustalenia: document.getElementById('ustalenia').value.trim()
     },
