@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protokół Przejęcia Magazynu — Automat Spec</title>
+<style>
+  :root {
+    --navy: #0f1f3d;
+    --navy-dark: #081328;
+    --navy-light: #1a3358;
+    --gold: #c8a24a;
+    --gold-light: #e0c377;
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #1c2430;
+    --muted: #6b7280;
+    --border: #e0e2e8;
+    --danger: #b3382c;
+    --success: #2f7a4f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    background: linear-gradient(135deg, var(--navy-dark), var(--navy));
+    color: #fff;
+    padding: 28px 20px;
+    text-align: center;
+    border-bottom: 4px solid var(--gold);
+  }
+  header h1 {
+    margin: 0 0 6px 0;
+    font-size: 1.5rem;
+    letter-spacing: 0.5px;
+  }
+  header p {
+    margin: 0;
+    color: var(--gold-light);
+    font-size: 0.9rem;
+  }
+  .wrap {
+    max-width: 1260px;
+    margin: 0 auto;
+    padding: 20px 16px 80px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(15,31,61,0.06);
+  }
+  .card h2 {
+    margin: 0 0 16px 0;
+    font-size: 1.05rem;
+    color: var(--navy);
+    border-left: 4px solid var(--gold);
+    padding-left: 10px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  input[type=text], input[type=date], input[type=number], textarea, select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.92rem;
+    font-family: inherit;
+    background: #fff;
+    color: var(--text);
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(200,162,74,0.25);
+  }
+  .field { margin-bottom: 12px; }
+  textarea { min-height: 70px; resize: vertical; }
+
+  .scanner-box {
+    background: var(--navy-dark);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .scanner-box label { color: var(--gold-light); }
+  .scanner-box input {
+    font-size: 1.05rem;
+    padding: 12px 10px;
+    border: 2px solid var(--gold);
+  }
+  .scanner-hint {
+    color: #b7c0d1;
+    font-size: 0.78rem;
+    margin-top: 6px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+  }
+  thead th {
+    background: var(--navy);
+    color: #fff;
+    text-align: left;
+    padding: 8px 6px;
+    font-weight: 600;
+  }
+  tbody td {
+    padding: 4px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tbody tr.row-matched { background: #f0f8f2; }
+  tbody tr.row-unmatched { background: #fdf1ef; }
+  tbody input {
+    padding: 5px 6px;
+    font-size: 0.8rem;
+    width: 100%;
+  }
+  .col-lp { width: 32px; text-align: center; color: var(--muted); }
+  .col-qty { width: 90px; }
+  .col-gram { width: 80px; }
+  .col-ean { width: 130px; }
+  .col-del { width: 30px; text-align: center; }
+  table { table-layout: fixed; width: 100%; }
+  tbody input, thead th { font-size: 0.8rem; }
+
+  .btn {
+    display: inline-block;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-gold {
+    background: var(--gold);
+    color: var(--navy-dark);
+  }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--navy);
+    color: var(--navy);
+  }
+  .btn-outline:hover { background: #eef1f6; }
+  .btn-del {
+    background: transparent;
+    border: none;
+    color: var(--danger);
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .row-actions { margin-top: 10px; display: flex; gap: 10px; }
+
+  .submit-bar {
+    text-align: center;
+    margin-top: 24px;
+  }
+  .submit-bar .btn { padding: 13px 34px; font-size: 1rem; }
+
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--danger);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    z-index: 999;
+    max-width: 90%;
+    text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.success { background: var(--success); }
+
+  #statusMsg {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .required::after { content: " *"; color: var(--danger); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Protokół Przejęcia Magazynu</h1>
+  <p>Automat Spec — dokumentacja stanu i inwentaryzacji magazynu</p>
+</header>
+
+<div class="wrap">
+  <form id="magazynForm">
+
+    <div class="card">
+      <h2>Dane przejęcia</h2>
+      <div class="grid">
+        <div class="field">
+          <label class="required">Firma przejmowana</label>
+          <input type="text" id="firmaPrzejmowana" required>
+        </div>
+        <div class="field">
+          <label class="required">Data inwentaryzacji magazynu</label>
+          <input type="date" id="dataInwentaryzacji" required>
+        </div>
+        <div class="field">
+          <label>Adres / lokalizacja magazynu</label>
+          <input type="text" id="adresMagazynu">
+        </div>
+        <div class="field">
+          <label>Numer protokołu (opcjonalnie)</label>
+          <input type="text" id="numerProtokolu" placeholder="np. MAG/2026/001">
+        </div>
+        <div class="field">
+          <label class="required">Osoba przekazująca</label>
+          <input type="text" id="osobaPrzekazujaca" required>
+        </div>
+        <div class="field">
+          <label class="required">Osoba przejmująca (Automat Spec)</label>
+          <input type="text" id="osobaPrzejmujaca" required>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Pozycje magazynowe</h2>
+
+      <div class="scanner-box">
+        <label>Skaner EAN — zeskanuj kod, aby dodać pozycję</label>
+        <input type="text" id="eanScanner" placeholder="Zeskanuj lub wpisz kod EAN i naciśnij Enter" autocomplete="off">
+        <div class="scanner-hint">Skaner działa jak klawiatura — po zeskanowaniu kodu i Enter pozycja zostanie automatycznie dodana do tabeli poniżej (jeśli produkt jest w bazie, dane uzupełnią się same).</div>
+      </div>
+
+      <div>
+      <table>
+        <thead>
+          <tr>
+            <th class="col-lp">Lp.</th>
+            <th class="col-ean">Kod EAN jednostkowy</th>
+            <th class="col-ean">Kod EAN zbiorczy</th>
+            <th>Nazwa handlowa produktu</th>
+            <th class="col-gram">Gramatura</th>
+            <th class="col-qty">Ilość w opak. zbiorczym</th>
+            <th class="col-qty">Ilość zgrzewek na magazynie</th>
+            <th class="col-qty">Ilość sztuk łącznie</th>
+            <th class="col-del"></th>
+          </tr>
+        </thead>
+        <tbody id="itemsBody"></tbody>
+      </table>
+      </div>
+
+      <div class="row-actions">
+        <button type="button" class="btn btn-outline" id="addRowBtn">+ Dodaj pozycję ręcznie</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Uwagi</h2>
+      <div class="field">
+        <label>Uwagi dotyczące stanu magazynu / rozbieżności</label>
+        <textarea id="uwagi"></textarea>
+      </div>
+    </div>
+
+    <div class="submit-bar">
+      <button type="submit" class="btn btn-gold" id="submitBtn">Zapisz i wyślij protokół</button>
+      <div id="statusMsg"></div>
+    </div>
+
+  </form>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const produktyMagazynDB = [{"name": "Burger wieprzowo - wołowy V-Resto", "ean": "5905563452233", "idApro": "25160"}, {"name": "Kebab z wołowiną V-Resto", "ean": "5905563452202", "idApro": "23325"}, {"name": "3 BIT XXL", "ean": "7622210416100", "idApro": "776"}, {"name": "Kubek 300ml uniwersalny", "ean": "5905280171349", "idApro": "25771"}, {"name": "4 Move Active Puszka Mg 0,5l", "ean": "5900552086062", "idApro": "20270"}, {"name": "4 Move Water 556ML Mg", "ean": "5900552077770", "idApro": "19696"}, {"name": "Kapsułki Nescafé Dolce Gusto Latte Macchiato 16 sztuk", "ean": "7613037491159", "idApro": "27709"}, {"name": "Kapsułki Nescafé Dolce Gusto Espresso Intenso 16 sztuk", "ean": "7613036867436", "idApro": "22710"}, {"name": "Kapsułki Nescafé Dolce Gusto Latte Macchiato Caramel 16 sztuk", "ean": "7613037788884", "idApro": "27711"}, {"name": "Woda Żywiec Zdrój Gaz SK 0,5l", "ean": "5900541012508", "idApro": "27803"}, {"name": "7 Days", "ean": "5201360521210", "idApro": "63"}, {"name": "Acerola, 60 tabletek do ssania", "ean": "5907553018443", "idApro": "18954"}, {"name": "Kawa Aroma Pieno puszka ziarno 300g", "ean": "5907614653682", "idApro": "17844"}, {"name": "Axpal Popcorn 15g", "ean": "5907799261658", "idApro": "20315"}, {"name": "Ba! Baton Kids Krówka 25g", "ean": "5900749625012", "idApro": "20284"}, {"name": "Ba! Baton Nuts Arachid z Czekoladą 30g", "ean": "5900749623834", "idApro": "21162"}, {"name": "Ba! Baton Nuts Pistacja 30g", "ean": "5900749623810", "idApro": "21164"}, {"name": "Bakalland Choco Baton z Białą Czekoladą 25g", "ean": "5900749642118", "idApro": "21168"}, {"name": "Bakalland Daktyle całe owoce 100 g", "ean": "5900749020244", "idApro": "22044"}, {"name": "Bakalland Migdały łuskane 40g", "ean": "5900749026093", "idApro": "21170"}, {"name": "Bakalland Orzechy nerkowca 40g", "ean": "5900749026239", "idApro": "21171"}, {"name": "Bakalland Pistacje prażone solone 40g", "ean": "5900749028042", "idApro": "21169"}, {"name": "Bakalland SELECTION Figi duże owoce 100g_x000D_", "ean": "5900749360135", "idApro": "22046"}, {"name": "Bakalland SELECTION Mango 70g", "ean": "5900749020862", "idApro": "22045"}, {"name": "Baton Dare 45g", "ean": "8690526254470", "idApro": "19302"}, {"name": "Baton Dobra Kaloria Kokos&Orzech 35g", "ean": "5903548002022", "idApro": "16190"}, {"name": "Baton Magnetic 39-43g", "ean": "5902581688118", "idApro": "17308"}, {"name": "Baton Vitanella 40G", "ean": "5900749639972", "idApro": "8863"}, {"name": "Belvita", "ean": "7622300382216", "idApro": "313"}, {"name": "BeRAW Baton Energy Raspberry Chocolate 40g", "ean": "5903246562552", "idApro": "21165"}, {"name": "BeRAW Energy Peanut Butter 40g", "ean": "5905669246583", "idApro": "19767"}, {"name": "BeRAW Kids Żelki Truskawka 35g", "ean": "5903246567274", "idApro": "21167"}, {"name": "Black Energy LIGHT puszka 0,25l", "ean": "5900552021865", "idApro": "13446"}, {"name": "Black Energy Drink Puszka 0,5l", "ean": "5900552079149", "idApro": "16511"}, {"name": "Bruschetta Maretti", "ean": "3800205871255", "idApro": "426"}, {"name": "Bulion Warzywny MV 405.", "ean": "5900910010807", "idApro": "15626"}, {"name": "Caveres Kawa ziarnista wesoło świąteczny blend kawowy 1kg", "ean": "5905280170540", "idApro": "20904"}, {"name": "Caveres Kawa ziarnista wesoło świąteczny blend kawowy 250g", "ean": "5905280170557", "idApro": "20903"}, {"name": "Caveres Kawa mielona wesoło świąteczny blend kawowy 250g", "ean": "5905280170564", "idApro": "20902"}, {"name": "Zestaw świąteczny blend 3x250g kawa ziarnista", "ean": "5905280170717", "idApro": "20911"}, {"name": "Zestaw świąteczny blend 3x250g kawa mielona", "ean": "5905280170700", "idApro": "20912"}, {"name": "Zestaw świąteczny blend 2x250g kawa ziarnista", "ean": "5905280170724", "idApro": "20913"}, {"name": "Calcium Apteo 300mg*20 Z Kwer.Sm.Pomar", "ean": "5907553014032", "idApro": "18956"}, {"name": "Carbo Wegiel Akt Apteo*20 Kap", "ean": "5907553018702", "idApro": "18958"}, {"name": "Caveres Zestaw Brazylia Santos mielona 250g + 2x Herbata", "ean": "5905280171370", "idApro": "27272"}, {"name": "Caveres Zestaw Brazylia Santos ziarno 250g + 2x Herbata Teekanne", "ean": "5905280171363", "idApro": "27271"}, {"name": "Caveres BARBER Coffee", "ean": "5907614653095", "idApro": "15378"}, {"name": "Caveres BARBER Coffee mielona 250g - szt.", "ean": "5907614653569", "idApro": "16320"}, {"name": "Caveres BARBER Coffee ziarno 250g - szt.", "ean": "5907614653163", "idApro": "15783"}, {"name": "Caveres BRAZIL SANTOS ziarno", "ean": "5907614653194", "idApro": "15344"}, {"name": "Caveres BRAZIL SANTOS mielona 250g - szt.", "ean": "5907614653439", "idApro": "15778"}, {"name": "Caveres BRAZIL SANTOS ziarno 250g - szt.", "ean": "5907614653316", "idApro": "15791"}, {"name": "Caveres COLOMBIA EXCELSO ziarno", "ean": "5907614653170", "idApro": "15342"}, {"name": "Caveres COLOMBIA EXCELSO mielona 250g - szt.", "ean": "5907614653415", "idApro": "15779"}, {"name": "Caveres COLOMBIA EXCELSO ziarno 250g - szt.", "ean": "5907614653293", "idApro": "15787"}, {"name": "Caveres COSTA RICA mielona 250g - szt.", "ean": "5907614653507", "idApro": "15817"}, {"name": "Caveres COSTA RICA ziarno", "ean": "5907614653262", "idApro": "15340"}, {"name": "Caveres COSTA RICA ziarno 250g - szt.", "ean": "5907614653385", "idApro": "15796"}, {"name": "Caveres EL SALVADOR mielona 250g - szt.", "ean": "5907614653484", "idApro": "15777"}, {"name": "Caveres EL SALVADOR ziarno 250g - szt.", "ean": "5907614653361", "idApro": "15794"}, {"name": "Caveres EL SALVADOR ziarno", "ean": "5907614653248", "idApro": "15338"}, {"name": "Caveres ETIOPIA SIDAMO ziarno", "ean": "5907614653279", "idApro": "15336"}, {"name": "Caveres ETIOPIA SIDAMO mielona 250g - szt.", "ean": "5907614653514", "idApro": "15819"}, {"name": "Caveres ETIOPIA SIDAMO ziarno 250g - szt.", "ean": "5907614653392", "idApro": "15790"}, {"name": "Caveres Guatemala mielona 250g - szt", "ean": "5907614653453", "idApro": "19586"}, {"name": "Caveres GUATEMALA ziarno", "ean": "5907614653217", "idApro": "15334"}, {"name": "Caveres GUATEMALA ziarno 250g - szt.", "ean": "5907614653330", "idApro": "15793"}, {"name": "Caveres HONDURAS mielona 250g - szt.", "ean": "5907614653491", "idApro": "15780"}, {"name": "Caveres HONDURAS ziarno", "ean": "5907614653255", "idApro": "15332"}, {"name": "Caveres HONDURAS ziarno 250g - szt.", "ean": "5907614653378", "idApro": "15792"}, {"name": "Caveres INDIA CHERRY ziarno", "ean": "5907614653187", "idApro": "15330"}, {"name": "Caveres INDIA CHERRY mielona 250g - szt.", "ean": "5907614653422", "idApro": "15816"}, {"name": "Caveres INDIA CHERRY ziarno 250g - szt.", "ean": "5907614653309", "idApro": "15785"}, {"name": "Caveres INDIA MONSUNED ziarno", "ean": "5907614653224", "idApro": "15328"}, {"name": "Caveres INDIA MONSUNED mielona 250g - szt.", "ean": "5907614653460", "idApro": "15815"}, {"name": "Caveres INDIA MONSUNED ziarno 250g - szt.", "ean": "5907614653347", "idApro": "15789"}, {"name": "Caveres PERU mielona 250g - szt.", "ean": "5907614653446", "idApro": "15782"}, {"name": "Caveres PERU ziarno", "ean": "5907614653200", "idApro": "15326"}, {"name": "Caveres TANZANIA KILIMANJARO ziarno", "ean": "5907614653286", "idApro": "15324"}, {"name": "Caveres TANZANIA KILIMANJARO mielona 250g - szt.", "ean": "5907614653521", "idApro": "15781"}, {"name": "Caveres TANZANIA KILIMANJARO ziarno 250g - szt.", "ean": "5907614653408", "idApro": "15788"}, {"name": "Caveres UGANDA mielona 250g - szt.", "ean": "5907614653477", "idApro": "15784"}, {"name": "Caveres UGANDA ziarno", "ean": "5907614653231", "idApro": "15322"}, {"name": "Caveres UGANDA ziarno 250g - szt.", "ean": "5907614653354", "idApro": "15786"}, {"name": "Caveres zestaw kaw: Brazylia, Kolumbia, Salwador", "ean": "5907614653576", "idApro": "15625"}, {"name": "Caveres zestaw SERCE 2x250g Brazylia Arabica/Robusta kawa mielona 500g", "ean": "5905280171035", "idApro": "23800"}, {"name": "Cera+ Solutions Emol.Kr.D/T 100ml", "ean": "5907553017828", "idApro": "18959"}, {"name": "CHIPSY LAY'S 40G", "ean": "5900259099273", "idApro": "9614"}, {"name": "Chusteczka Nawilżana do Higieny Intymnej - 1 sztuka", "ean": "5907222245552", "idApro": "19534"}, {"name": "Ciasteczka Owsiane Kokos-Czek Sante 38g", "ean": "5900617012890", "idApro": "15206"}, {"name": "Ciastka Milka Choco Brownie 150g", "ean": "7622210669315", "idApro": "16022"}, {"name": "Ciastka Pieguski Milka 135g", "ean": "5906747312107", "idApro": "1066"}, {"name": "Cienkopis Rystor RC-04 Czarny", "ean": "5907548912152", "idApro": "1359"}, {"name": "Cienkopis Rystor RC-04 Czerwony", "ean": "5907548912169", "idApro": "1360"}, {"name": "Cienkopis Rystor RC-04 Niebieski", "ean": "5907548912176", "idApro": "1361"}, {"name": "Cienkopis Rystor RC-04 Zielony", "ean": "5907548912183", "idApro": "1362"}, {"name": "2-phase Cleaning TABS+ 10*2g", "ean": "5904347183752", "idApro": "25898"}, {"name": "Coca Cola zero 0,33l", "ean": "5449000131805", "idApro": "363"}, {"name": "Coca Cola Zero Pet 0,5l", "ean": "5449000131836", "idApro": "502"}, {"name": "Coca-Cola 0,33L", "ean": "5449000000996", "idApro": "203"}, {"name": "Coca-cola cherry puszka 0,33L", "ean": "5449000195364", "idApro": "1323"}, {"name": "Cukier", "ean": "5907069001410", "idApro": "41"}, {"name": "cukier biały saszetka 5gx600szt", "ean": "5907069002530", "idApro": "832"}, {"name": "cukier biały saszetka 5gx200szt", "ean": "5907069000208", "idApro": "831"}, {"name": "cukier trzcinowy sasz.5gx600szt", "ean": "5907069002547", "idApro": "834"}, {"name": "cukier trzcinowy demerara 200szt", "ean": "5907069000543", "idApro": "833"}, {"name": "Czekolada biała DecoMorreno MV 106", "ean": "5900910006541", "idApro": "24593"}, {"name": "Czekolada DecoMorreno MV 109.", "ean": "5900910008620", "idApro": "15579"}, {"name": "Czekolada Gorzka Wedel 90g", "ean": "5901588018768", "idApro": "16195"}, {"name": "czekolada Milka", "ean": "7622201062880", "idApro": "805"}, {"name": "Czekolada Mokate Inst.", "ean": "5900649065666", "idApro": "40"}, {"name": "Delicje Szampańskie 147g", "ean": "5906747308438", "idApro": "15906"}, {"name": "Długopis BIC Jednorazowy czarny", "ean": "3086123001053", "idApro": "1363"}, {"name": "Długopis BIC Jednorazowy Niebieski", "ean": "3086123001060", "idApro": "1365"}, {"name": "Draże Kokosowe 70g", "ean": "5902978002428", "idApro": "2862"}, {"name": "Elektrolity Apteo*20 Tabl.Mus.", "ean": "5907553018290", "idApro": "18961"}, {"name": "Familijne Jutrzenka 180g", "ean": "5900352001883", "idApro": "15908"}, {"name": "Fanta 0,33L", "ean": "5449000054531", "idApro": "250"}, {"name": "FANTA PET 0,5L", "ean": "5000112654455", "idApro": "771"}, {"name": "Figaro Baton Banana 25 gr", "ean": "8585000207243", "idApro": "19639"}, {"name": "Gardło Miód-Cytryna , 16 Pastylek Do Ssania", "ean": "5907553013981", "idApro": "18963"}, {"name": "Gardło Porost Islandzki 36 Mięk Past Do Ssania", "ean": "5904012364172", "idApro": "18964"}, {"name": "Gladio Aloes Alo Alo 500ml", "ean": "5902596118303", "idApro": "19811"}, {"name": "Gorący Kubek", "ean": "8712100867620", "idApro": "70"}, {"name": "Guma Orbit 10 Drażetek", "ean": "50173204", "idApro": "450"}, {"name": "Herbapol Syrop Malina 420ml", "ean": "5900956100593", "idApro": "16031"}, {"name": "Herbata cytrynowa inst.", "ean": "5900649065642", "idApro": "98"}, {"name": "HERBATA EKLAND EARL GREY", "ean": "5900910007555", "idApro": "11883"}, {"name": "HERBATA EKLAND MALINOWA", "ean": "5900910009443", "idApro": "9609"}, {"name": "HERBATA LIPTON INST CZARNA", "ean": "8711200337286", "idApro": "11369"}, {"name": "Herbata Teekanne Black Label RFA 20t", "ean": "5901086002931", "idApro": "27598"}, {"name": "Herbata Teekanne English Breakfast RFA", "ean": "5901086001668", "idApro": "27597"}, {"name": "Herbata Teekanne exp Green Tea 20t", "ean": "5901086000333", "idApro": "16026"}, {"name": "Herbata Teekanne LOVE 20t", "ean": "5901086049301", "idApro": "27602"}, {"name": "Herbata Teekanne Magic Moments 20t", "ean": "5901086000913", "idApro": "27603"}, {"name": "Herbata Teekanne Malina z cytryną 20t", "ean": "5901086076857", "idApro": "27601"}, {"name": "Herbata Teekanne Mięta 20t", "ean": "5901086065363", "idApro": "27600"}, {"name": "Herbata Teekanne White Tea Citrus RFA 20t", "ean": "5901086001415", "idApro": "27599"}, {"name": "Herbata Tetley exp czarna 100t", "ean": "5014328015535", "idApro": "15900"}, {"name": "Herbata Tetley exp czarna 25t", "ean": "5014328083763", "idApro": "15899"}, {"name": "Herbata Tetley exp Earl Grey 100t", "ean": "5014328050987", "idApro": "16024"}, {"name": "Herbata Vitax exp miętowa 20t", "ean": "5900175431720", "idApro": "15902"}, {"name": "Kawa Jacobss", "ean": "8711000373385", "idApro": "448"}, {"name": "Jeżyki Jutrzenka 140g", "ean": "5900352002361", "idApro": "15907"}, {"name": "Kabanosy Tarczyński exclusiv GO 50g", "ean": "5908230514340", "idApro": "17296"}, {"name": "Kawa Mielona Aroma Pieno 250g - szt.", "ean": "5907614653071", "idApro": "14462"}, {"name": "Kawa Mielona Rosso 250g - szt.", "ean": "5907614653538", "idApro": "14512"}, {"name": "Kawa Mielona Turchese 250g - szt.", "ean": "5907614653545", "idApro": "14511"}, {"name": "Kawa Mielona Vero Gusto Classico 250g - szt.", "ean": "5907614653088", "idApro": "14461"}, {"name": "Kawa AG Enzo Bencini 500g AG Foods", "ean": "8594003661235", "idApro": "27697"}, {"name": "Kawa Bezkofeinowa Mielona 250g", "ean": "5905280170342", "idApro": "20331"}, {"name": "Kawa Bezkofeinowa Ziarnista 250g", "ean": "5905280170335", "idApro": "20330"}, {"name": "Kawa Caveres Mio Grani mielona 250g", "ean": "5905280170359", "idApro": "19735"}, {"name": "Kawa Caveres Mio Grani ziarno 1kg", "ean": "5905280170373", "idApro": "19733"}, {"name": "Kawa Caveres Mio Grani ziarno 250g", "ean": "5905280170366", "idApro": "19734"}, {"name": "Kawa Jacobs Cronat Gold Instant 200g", "ean": "8711000513767", "idApro": "15903"}, {"name": "KAWA MIELONA BRAZYLIA Arabica/Robusta 250g", "ean": "5905280170175", "idApro": "19300"}, {"name": "KAWA MIELONA BRAZYLIA Arabica/Robusta 100g", "ean": "5905280171028", "idApro": "25036"}, {"name": "Kawa Mokate To Go 500g", "ean": "5900649058873", "idApro": "1267"}, {"name": "Kawa Nescafee  instant_x000D_", "ean": "7613038540290", "idApro": "438"}, {"name": "Kawa Vero Gusto mielona 100g", "ean": "5905280171103", "idApro": "24245"}, {"name": "Kawa Vero Gusto ziarno 100g", "ean": "5905280171110", "idApro": "24246"}, {"name": "Kawa Ziarno Aroma Pieno 250g - szt.", "ean": "5907614653057", "idApro": "13898"}, {"name": "Kawa Ziarno Vero Gusto Classico 250g - szt.", "ean": "5907614653064", "idApro": "13896"}, {"name": "KAWA ZIARNISTA BRAZYLIA Arabica/Robusta 250g", "ean": "5905280170168", "idApro": "19301"}, {"name": "KAWA ZIARNISTA BRAZYLIA Arabica/Robusta 100g", "ean": "5905280171011", "idApro": "25037"}, {"name": "Kawa Ziarnista Rosso", "ean": "5907614653033", "idApro": "1262"}, {"name": "Kawa Ziarnista Turchese", "ean": "5907614653026", "idApro": "1261"}, {"name": "KAWA ZIARNO AROMA PIENO", "ean": "5905280171240", "idApro": "12216"}, {"name": "KAWA ZIARNO AROMA PIENO - CLASSICO", "ean": "5907614653019", "idApro": "16695"}, {"name": "Kawa Ziarno Brazylia Arabica/Robusta", "ean": "5907614653897", "idApro": "18166"}, {"name": "Kawa ziarno Rosso 250g - szt.", "ean": "5907614653132", "idApro": "15756"}, {"name": "Kawa ziarno Turchese 250g - szt.", "ean": "5907614653149", "idApro": "15757"}, {"name": "KAWA ZIARNO VERO GUSTO", "ean": "5905280170755", "idApro": "12214"}, {"name": "KAWA ZIARNO VERO GUSTO - CLASSICO", "ean": "5907614653002", "idApro": "16694"}, {"name": "Kotlet Drobiowy", "ean": "5901398074794", "idApro": "1238"}, {"name": "Kotlet Mielony 400g", "ean": "5901398072301", "idApro": "15016"}, {"name": "Kotlet Schabowy", "ean": "5901398074787", "idApro": "1239"}, {"name": "Krem Pielegnac.Z Wit.A+E Apteo Care 50m", "ean": "5907553015091", "idApro": "18966"}, {"name": "Kubek 150 ML papier", "ean": "5905280171318", "idApro": "251"}, {"name": "Kubek 300 ML", "ean": "5905280171332", "idApro": "255"}, {"name": "Kubek Papierowy 180 ML BIO/CUP OF PAPER 180ML", "ean": "5901460019814", "idApro": "15911"}, {"name": "Lion Orzechowy 40g", "ean": "7613287910561", "idApro": "107"}, {"name": "Herbata Lipton exp 50t", "ean": "5900300550203", "idApro": "14510"}, {"name": "Lipton EXP Camomile 25T", "ean": "5900300586981", "idApro": "16325"}, {"name": "Herbata Lipton EXP Earl Grey 25T", "ean": "3228881018403", "idApro": "1069"}, {"name": "Herbata Lipton EXP Eng Break 25T", "ean": "5900300586929", "idApro": "952"}, {"name": "Lipton EXP Green Tea Citrus 25t", "ean": "8722700167631", "idApro": "16198"}, {"name": "Herbata Lipton EXP Strawberry 25T", "ean": "8722700167617", "idApro": "951"}, {"name": "Herbata Lipton EXP Zielona Classic 25T", "ean": "8722700416364", "idApro": "955"}, {"name": "Herbata Lipton EXP Zielona Mint 25T", "ean": "3228881015921", "idApro": "956"}, {"name": "Lipton Pet 0,5l", "ean": "5900497043229", "idApro": "166"}, {"name": "Lipton puszka 0,33l Sleek", "ean": "5900497030267", "idApro": "18555"}, {"name": "Lusette Wafel 50g", "ean": "8584004031137", "idApro": "1190"}, {"name": "Racuchy / Łazanki 400g", "ean": "5901398062647", "idApro": "18865"}, {"name": "Łowicz Syrop Malina 400ml", "ean": "5900397745780", "idApro": "16035"}, {"name": "Magnez Apteo Skurcz*20 Tabl.Mus", "ean": "5907553017385", "idApro": "18967"}, {"name": "MD pet 0,5l", "ean": "5900497280501", "idApro": "77"}, {"name": "MD puszka 0,33l Sleek", "ean": "5900497033756", "idApro": "18556"}, {"name": "Kawa Jacobs Kronung mielona 500 g", "ean": "8711000525722", "idApro": "782"}, {"name": "Mieta Apteo Natura Fix 2g * 30 Sasz", "ean": "5907553013141", "idApro": "18968"}, {"name": "Mirinda Pet 0,5l", "ean": "5900497330503", "idApro": "79"}, {"name": "Mirinda puszka 0,33l Sleek", "ean": "5900497030236", "idApro": "18557"}, {"name": "Mixitki BEZ GLUTENU - Banan + Kokos", "ean": "8595685208718", "idApro": "26497"}, {"name": "Mixitki BEZ GLUTENU - Daktyle + Figi", "ean": "8595685202389", "idApro": "26495"}, {"name": "Mixitki BEZ GLUTENU - Orzechy nerkowca + Cytryna", "ean": "8595685210452", "idApro": "26494"}, {"name": "MLEKO 1L 2,0% BEZ LAKTOZY", "ean": "5907809284301", "idApro": "10448"}, {"name": "Mokate Irish Cappuccino", "ean": "5900649072510", "idApro": "12881"}, {"name": "Multi Flora, 20 Kapsułek", "ean": "5907553013134", "idApro": "18969"}, {"name": "Multiwitamina Z Magnezem Apteo*20 Tabl", "ean": "5907553013387", "idApro": "18970"}, {"name": "Naleśniki Danie Obiadowe", "ean": "5901398075289", "idApro": "1236"}, {"name": "4 Move 0,5l", "ean": "5900552047308", "idApro": "677"}, {"name": "Nestea Pet 0,5l", "ean": "5900334017710", "idApro": "733"}, {"name": "Nestea puszka 0,33l", "ean": "5900334017772", "idApro": "16502"}, {"name": "Nić Dent.Apteo Care Mietowa 50m Ne", "ean": "5907553019211", "idApro": "18971"}, {"name": "Nimm2 Śmiejżelki Owocowe 100g", "ean": "4014400907278", "idApro": "18163"}, {"name": "Olej Z Wątroby Rekina Forte, 60 Kapsułek", "ean": "5907553018122", "idApro": "18972"}, {"name": "Oshee 555 ml Lemoniada Mal&Grap", "ean": "5908260258016", "idApro": "18854"}, {"name": "Oshee 555 ml Min&Vit", "ean": "5908260253790", "idApro": "17598"}, {"name": "Oshee Baton Zbożowy", "ean": "5908260252786", "idApro": "676"}, {"name": "Oshee Isotonic 0,5l Multifruit", "ean": "5908260254087", "idApro": "1233"}, {"name": "Paluszki Solone", "ean": "5907799261825", "idApro": "59"}, {"name": "Paluszki Lubella 70g", "ean": "5900049041017", "idApro": "20264"}, {"name": "Paluszki Lubella Sezamowe 70g", "ean": "5900049041031", "idApro": "20632"}, {"name": "Pepsi MAX Pet 0,5l", "ean": "5900497300506", "idApro": "14830"}, {"name": "Pepsi MAX puszka 0,33l Sleek", "ean": "5900497030229", "idApro": "18558"}, {"name": "Pepsi Pet 0,5l", "ean": "5900497310505", "idApro": "34"}, {"name": "Pepsi puszka 0,33l Sleek", "ean": "5900497030212", "idApro": "18554"}, {"name": "PIEROGI RUSKIE 5%", "ean": "5901398073353", "idApro": "10179"}, {"name": "Pierogi z mięsem", "ean": "5901398073346", "idApro": "10176"}, {"name": "Placki ziemniaczane z gulaszem", "ean": "5901398068861", "idApro": "433"}, {"name": "Plaster Apteo N/Pecherze Zestaw*7 Szt", "ean": "5907553019617", "idApro": "18973"}, {"name": "Plaster D/Dzieci Apteo Sowki*12 Szt.", "ean": "5908312470946", "idApro": "18974"}, {"name": "Plaster D/Dzieci Kotki/Pieski*10(12) Szt", "ean": "5901986090519", "idApro": "18975"}, {"name": "Plaster Zestaw Turystyczny*27 Szt Apteo", "ean": "5901986090151", "idApro": "18976"}, {"name": "Plusssz Sport Complex 20t", "ean": "5901785307320", "idApro": "18775"}, {"name": "Podp.Apteo Ultra Cienkie*10 Szt", "ean": "5907553019839", "idApro": "18977"}, {"name": "PODPASKA BELLA PERF BLUE", "ean": "5900516305253", "idApro": "11947"}, {"name": "Prince Polo XXLQ", "ean": "7622210309792", "idApro": "197"}, {"name": "Napój RedBull Puszka", "ean": "9002490100070", "idApro": "204"}, {"name": "Rogal Agiberia 60g", "ean": "8594162114122", "idApro": "18774"}, {"name": "ROSHEN Baton karmelowy 40g", "ean": "4823077617041", "idApro": "19736"}, {"name": "Kawa Jacobs Kronung instant 200g", "ean": "8711000521045", "idApro": "783"}, {"name": "Rutyna Z Witaminami, 100 Tabletek", "ean": "5907553013721", "idApro": "18979"}, {"name": "Sante Go On Baton Vitamin 50g", "ean": "5900617034809", "idApro": "17464"}, {"name": "Sante mieszanka studencka 40g", "ean": "5900617036162", "idApro": "17460"}, {"name": "Sinuapteo Zatoki, 60 Kapsułek", "ean": "5907553014988", "idApro": "18980"}, {"name": "Snickers baton 55g", "ean": "5000159461122", "idApro": "11"}, {"name": "Snickers Big 75g", "ean": "5900951222849", "idApro": "30"}, {"name": "So Food Kurczak curry po ind. z ryż 330g", "ean": "5901002008115", "idApro": "19709"}, {"name": "So Food Leczo z kiełbasą z szynki 400g", "ean": "5901002008887", "idApro": "19713"}, {"name": "Sok Riviva 0,33l Pet", "ean": "5901088013218", "idApro": "17307"}, {"name": "Sonko Lekkie Wafelki 36g", "ean": "5902180630112", "idApro": "16116"}, {"name": "Syrop Karmelowy", "ean": "8001780303673", "idApro": "1112"}, {"name": "Syrop Waniliowy", "ean": "8001780303697", "idApro": "1111"}, {"name": "Tabletki Na Trawienie Apteo*30 Tabl.", "ean": "5907553016548", "idApro": "18983"}, {"name": "Tampony O.B. Procomfort Normal*8 Szt.Ne", "ean": "3574661331119", "idApro": "18984"}, {"name": "Tampony O.B. Procomfort Super* 8 Szt.Ne", "ean": "3574661331140", "idApro": "18985"}, {"name": "Tarczyn Pomidor Sok 100% 300ml", "ean": "5901067402484", "idApro": "15832"}, {"name": "Tiger Energy Vend Puszka 250ml", "ean": "5900334021564", "idApro": "21003"}, {"name": "TOMA SOK POMARAŃCZOWY", "ean": "8594004638755", "idApro": "867"}, {"name": "Twix Xtra", "ean": "5900951028502", "idApro": "342"}, {"name": "TYMBARK MUS 120G", "ean": "5900334014443", "idApro": "12987"}, {"name": "Tymbark Sok 100% Jabłko 300ml", "ean": "5900334001740", "idApro": "16448"}, {"name": "Tymbark Sok 100% Multiwitamina 300ml", "ean": "5900334001818", "idApro": "16156"}, {"name": "Tymbark Sok 100% Pomarańcza 300ml", "ean": "5900334001733", "idApro": "16155"}, {"name": "TYMBARK VITAMINI 300ML", "ean": "5900334002587", "idApro": "1420"}, {"name": "Unimil Prezerwatywa", "ean": "5011831083556", "idApro": "16197"}, {"name": "Kawa Vero Gusto puszka ziarno 300g", "ean": "5907614653699", "idApro": "17843"}, {"name": "Vit.D3+K2 Mk-7 Apteo*30 Kaps.", "ean": "5907553018078", "idApro": "18987"}, {"name": "Wafel Estella XXL 50g", "ean": "5900797008157", "idApro": "463"}, {"name": "Wafel Teatralny w Czekoladzie 40g", "ean": "5900056000069", "idApro": "17735"}, {"name": "Wieczka 80mm", "ean": "5907550721667", "idApro": "309"}, {"name": "Wieczko 70mm", "ean": "5901460004742", "idApro": "2855"}, {"name": "Wieczko 90mm", "ean": "5902686662419", "idApro": "1157"}, {"name": "WKŁADKA NATURELLA 20", "ean": "4015400240310", "idApro": "685"}, {"name": "WODA KINGA PIENIŃSKA 0,5L", "ean": "5901268004036", "idApro": "9980"}, {"name": "Woda Mineralna", "ean": "5900541000062", "idApro": "52"}, {"name": "Woda Morska Dla Dzieci 100 Ml", "ean": "5907553018597", "idApro": "18994"}, {"name": "Woda Morska 100 Ml", "ean": "5907553014292", "idApro": "18993"}, {"name": "Zestaw Caveres Kaw Świata Mielonych 3x250g - Braz, Kolu, Salw", "ean": "5905280170601", "idApro": "21889"}, {"name": "Zestaw Caveres 10x250g +2x250 Ziar: Kawy Świata (bez pudełka)", "ean": "5905280170267", "idApro": "19584"}, {"name": "Zestaw 2x 250g Vero Gusto + Teek Gold 20t Kaw", "ean": "5905280170212", "idApro": "19490"}, {"name": "Zestaw 4x250g Miel: Vero, Aroma, Turchese, Rosso (bez pudełka)", "ean": "5905280170243", "idApro": "19585"}, {"name": "ZESTAW Brazylia Arabica/Robusta 3x250g ziarno", "ean": "5905280170021", "idApro": "19455"}, {"name": "ZESTAW Brazylia Arabica/Robusta 3x250g Mielona", "ean": "5905280170182", "idApro": "19492"}, {"name": "Zestaw Caveres 2 Kaw Mielonych: Brazylia 50/50, Brazylia 50/50", "ean": "5905280170519", "idApro": "19819"}, {"name": "Zestaw Caveres 2 Kaw Ziarnistych: Brazylia 50/50, Brazylia 50/50", "ean": "5905280170472", "idApro": "19815"}, {"name": "Zestaw Caveres 2 Kaw Mielonych: Aroma, Vero", "ean": "5905280170489", "idApro": "19816"}, {"name": "Zestaw Caveres 2 Kaw Mielonych: Rosso, Turchese", "ean": "5905280170496", "idApro": "19817"}, {"name": "Zestaw Caveres 2 Kaw Ziarnistych: Rosso, Turchese", "ean": "5905280170458", "idApro": "19813"}, {"name": "Zestaw Caveres 4 Kaw Mielonych: Aroma, Vero, Rosso, Turchese", "ean": "5907614653613", "idApro": "17602"}, {"name": "Zestaw Caveres 4 Kaw Ziarnistych: Aroma, Vero, Rosso, Turchese", "ean": "5907614653606", "idApro": "17684"}, {"name": "Zestaw kaw mielonych Brazylia 250g Kolumbia 250g + miód gryczany", "ean": "5905280170830", "idApro": "22133"}, {"name": "Zestaw kaw ziarnistych Brazylia 250g Kolumbia 250g + miód gryczany", "ean": "5905280170823", "idApro": "22111"}, {"name": "Zupa Barszcz", "ean": "5900397740785", "idApro": "42"}, {"name": "Zupa  Pieczarkowa_x000D_", "ean": "5900397740808", "idApro": "99"}, {"name": "Zupka chińska", "ean": "5901882110151", "idApro": "104"}];
+
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbRm9TS32I_o9NkXlYAz4fwgCMG7WuH5OJVq9b6OxootfzVUh80j6TCkYRiBUVzAKL/exec";
+
+let rowCounter = 0;
+const itemsBody = document.getElementById('itemsBody');
+
+function eanIndex() {
+  if (!window._eanIndex) {
+    window._eanIndex = {};
+    produktyMagazynDB.forEach(p => { if (p.ean) window._eanIndex[p.ean] = p; });
+  }
+  return window._eanIndex;
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = type === 'success' ? 'show success' : 'show';
+  setTimeout(() => { t.className = ''; }, 2200);
+}
+
+function addRow(prefill) {
+  rowCounter++;
+  const tr = document.createElement('tr');
+  tr.dataset.rowId = rowCounter;
+
+  const matched = !!(prefill && prefill.matched);
+  if (prefill) tr.className = matched ? 'row-matched' : 'row-unmatched';
+
+  tr.innerHTML = `
+    <td class="col-lp">${rowCounter}</td>
+    <td class="col-ean"><input type="text" class="f-ean-jedn" value="${prefill && prefill.eanJednostkowy ? escapeHtml(prefill.eanJednostkowy) : ''}" placeholder="EAN jednostkowy"></td>
+    <td class="col-ean"><input type="text" class="f-ean-zbior" value="${prefill && prefill.eanZbiorczy ? escapeHtml(prefill.eanZbiorczy) : ''}" placeholder="EAN zbiorczy"></td>
+    <td><input type="text" class="f-nazwa" value="${prefill && prefill.name ? escapeHtml(prefill.name) : ''}" placeholder="Nazwa produktu"></td>
+    <td class="col-gram"><input type="text" class="f-gramatura" value="${prefill && prefill.gramatura ? escapeHtml(prefill.gramatura) : ''}" placeholder="np. 250g"></td>
+    <td class="col-qty"><input type="number" class="f-ilosc-opak" min="0" step="1" value="${prefill && prefill.iloscOpak ? prefill.iloscOpak : ''}" placeholder="szt./zgrzewka"></td>
+    <td class="col-qty"><input type="number" class="f-zgrzewki" min="0" step="1" value="${prefill && prefill.zgrzewki ? prefill.zgrzewki : ''}" placeholder="liczba zgrzewek"></td>
+    <td class="col-qty"><input type="number" class="f-sztuki-lacznie" min="0" step="1" readonly tabindex="-1" placeholder="0" style="background:#f4f5f7;color:var(--muted);"></td>
+    <td class="col-del"><button type="button" class="btn-del" title="Usuń pozycję">✕</button></td>
+  `;
+
+  const iloscOpakInput = tr.querySelector('.f-ilosc-opak');
+  const zgrzewkiInput = tr.querySelector('.f-zgrzewki');
+  const sztukiInput = tr.querySelector('.f-sztuki-lacznie');
+
+  function recalcSztuki() {
+    const opak = parseFloat(iloscOpakInput.value) || 0;
+    const zgrz = parseFloat(zgrzewkiInput.value) || 0;
+    sztukiInput.value = (opak * zgrz) || '';
+  }
+  iloscOpakInput.addEventListener('input', recalcSztuki);
+  zgrzewkiInput.addEventListener('input', recalcSztuki);
+  recalcSztuki();
+
+  tr.querySelector('.btn-del').addEventListener('click', () => {
+    tr.remove();
+    renumberRows();
+  });
+
+  itemsBody.appendChild(tr);
+}
+
+function renumberRows() {
+  let i = 0;
+  itemsBody.querySelectorAll('tr').forEach(tr => {
+    i++;
+    tr.querySelector('.col-lp').textContent = i;
+  });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+document.getElementById('addRowBtn').addEventListener('click', () => addRow());
+
+const scannerInput = document.getElementById('eanScanner');
+scannerInput.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const code = scannerInput.value.trim();
+  scannerInput.value = '';
+  if (!code) return;
+
+  const idx = eanIndex();
+  const product = idx[code];
+
+  if (product) {
+    addRow({ name: product.name, eanJednostkowy: product.ean, matched: true });
+    showToast('Dodano: ' + product.name, 'success');
+  } else {
+    addRow({ name: '', eanJednostkowy: code, matched: false });
+    showToast('Nieznany kod EAN: ' + code + ' — uzupełnij dane ręcznie', 'error');
+  }
+  scannerInput.focus();
+});
+
+// keep scanner focused for fast repeated scanning
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.card')?.querySelector('.scanner-box') === undefined) return;
+});
+
+// start with one empty row
+addRow();
+
+document.getElementById('magazynForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const submitBtn = document.getElementById('submitBtn');
+  const statusMsg = document.getElementById('statusMsg');
+
+  const items = [];
+  itemsBody.querySelectorAll('tr').forEach(tr => {
+    const nazwa = tr.querySelector('.f-nazwa').value.trim();
+    const gramatura = tr.querySelector('.f-gramatura').value.trim();
+    const iloscOpak = tr.querySelector('.f-ilosc-opak').value;
+    const zgrzewki = tr.querySelector('.f-zgrzewki').value;
+    const sztukiLacznie = tr.querySelector('.f-sztuki-lacznie').value;
+    const eanJednostkowy = tr.querySelector('.f-ean-jedn').value.trim();
+    const eanZbiorczy = tr.querySelector('.f-ean-zbior').value.trim();
+    if (nazwa || eanJednostkowy || eanZbiorczy) {
+      items.push({
+        nazwa,
+        gramatura,
+        iloscOpak: iloscOpak ? Number(iloscOpak) : 0,
+        zgrzewkiNaMagazynie: zgrzewki ? Number(zgrzewki) : 0,
+        sztukiLacznie: sztukiLacznie ? Number(sztukiLacznie) : 0,
+        eanJednostkowy,
+        eanZbiorczy
+      });
+    }
+  });
+
+  if (items.length === 0) {
+    showToast('Dodaj przynajmniej jedną pozycję magazynową', 'error');
+    return;
+  }
+
+  const payload = {
+    formType: "przejecie_magazynu",
+    firmaPrzejmowana: document.getElementById('firmaPrzejmowana').value.trim(),
+    dataInwentaryzacji: document.getElementById('dataInwentaryzacji').value,
+    adresMagazynu: document.getElementById('adresMagazynu').value.trim(),
+    numerProtokolu: document.getElementById('numerProtokolu').value.trim(),
+    osobaPrzekazujaca: document.getElementById('osobaPrzekazujaca').value.trim(),
+    osobaPrzejmujaca: document.getElementById('osobaPrzejmujaca').value.trim(),
+    uwagi: document.getElementById('uwagi').value.trim(),
+    pozycje: items,
+    submittedAt: new Date().toISOString()
+  };
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Wysyłanie...';
+  statusMsg.textContent = '';
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+
+    statusMsg.textContent = 'Protokół został wysłany. Dziękujemy.';
+    statusMsg.style.color = 'var(--success)';
+    showToast('Protokół zapisany i wysłany', 'success');
+    submitBtn.textContent = 'Wysłano ✓';
+  } catch (err) {
+    statusMsg.textContent = 'Błąd wysyłki. Spróbuj ponownie lub skontaktuj się z administratorem.';
+    statusMsg.style.color = 'var(--danger)';
+    showToast('Błąd wysyłki formularza', 'error');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Zapisz i wyślij protokół';
+  }
+});
+</script>
+
+</body>
+</html>
