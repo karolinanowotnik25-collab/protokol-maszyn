@@ -75,6 +75,14 @@
 
   .container { max-width: 700px; margin: 0 auto; padding: 20px 14px 60px; }
 
+  /* Na komputerze (szerszy ekran) kontener rozszerza się, żeby tabela
+     produktów (Kod EAN + ID + Produkt + Ilość + Sprężyna + Poj. + Cena + MBD)
+     mieściła się w całości bez poziomego suwaka. Na telefonie zostaje wąsko
+     i tabela scrolluje się w poziomie, tak jak wcześniej. */
+  @media (min-width: 900px) {
+    .container { max-width: 960px; }
+  }
+
   .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; overflow: hidden; }
 
   .section-header {
@@ -250,48 +258,6 @@
         <div class="conn-group">
           <input type="radio" name="typ_maszyny" id="tm_glassfront" value="Glassfront"><label for="tm_glassfront">Glassfront</label>
           <input type="radio" name="typ_maszyny" id="tm_inny" value="Inny"><label for="tm_inny">Inny</label>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 3. WRZUTNIK -->
-  <div class="section">
-    <div class="section-header"><div class="section-header-left"><span class="icon">💰</span> Wrzutnik i Liczniki</div></div>
-    <div class="section-body">
-      <div class="field"><label>Wartość kasy w tubach wrzutnika (zł)</label><input type="number" id="kasa_tuby" step="0.01" placeholder="0.00"></div>
-      <div class="field"><label>Numer seryjny wrzutnika</label><input type="text" id="nr_ser_wrzutnik" placeholder="np. 2688YA0U466"></div>
-      <div class="field"><label>Numer stikera na wrzutniku</label><input type="text" id="nr_stiker" placeholder="np. 8464"></div>
-      <div class="field"><label>Licznik Total</label><input type="number" id="licznik_total" placeholder="np. 34663"></div>
-      <div class="field full"><label>Kasa Total (zł)</label><input type="number" id="kasa_total" step="0.01" placeholder="np. 101547.30"></div>
-    </div>
-  </div>
-
-  <!-- 4. WYPOSAŻENIE -->
-  <div class="section">
-    <div class="section-header"><div class="section-header-left"><span class="icon">⚙️</span> Wyposażenie i Podłączenie</div></div>
-    <div class="section-body">
-      <div class="field">
-        <label>Czytnik kart płatniczych?</label>
-        <div class="toggle-group">
-          <input type="radio" name="czytnik_kart" id="ck_tak" value="TAK"><label for="ck_tak">TAK</label>
-          <input type="radio" name="czytnik_kart" id="ck_nie" value="NIE"><label for="ck_nie">NIE</label>
-        </div>
-      </div>
-      <div class="field">
-        <label>Czytnik banknotów?</label>
-        <div class="toggle-group">
-          <input type="radio" name="czytnik_banknotow" id="cb_tak" value="TAK"><label for="cb_tak">TAK</label>
-          <input type="radio" name="czytnik_banknotow" id="cb_nie" value="NIE"><label for="cb_nie">NIE</label>
-        </div>
-      </div>
-      <div class="field"><label>Nr TID czytnika – demontowany</label><input type="text" id="nr_tid_demontowany" placeholder="np. 02G51780"></div>
-      <div class="field"><label>Nr TID czytnika – montowany</label><input type="text" inputmode="numeric" id="nr_tid_montowany" placeholder="np. 03B64934"></div>
-      <div class="field full">
-        <label>Podłączenie wody</label>
-        <div class="conn-group">
-          <input type="radio" name="woda" id="w_stale" value="Stałe"><label for="w_stale">Stałe</label>
-          <input type="radio" name="woda" id="w_baniak" value="Baniak"><label for="w_baniak">Baniak</label>
         </div>
       </div>
     </div>
@@ -507,16 +473,6 @@ function collectFormData() {
     nr_old: val('nr_old'),
     nr_as: val('nr_as'),
     typ_maszyny: radio('typ_maszyny'),
-    kasa_tuby: val('kasa_tuby'),
-    nr_ser_wrzutnik: val('nr_ser_wrzutnik'),
-    nr_stiker: val('nr_stiker'),
-    licznik_total: val('licznik_total'),
-    kasa_total: val('kasa_total'),
-    czytnik_kart: radio('czytnik_kart'),
-    czytnik_banknotow: radio('czytnik_banknotow'),
-    nr_tid_demontowany: val('nr_tid_demontowany'),
-    nr_tid_montowany: val('nr_tid_montowany'),
-    woda: radio('woda'),
     uwagi: val('uwagi'),
     data_przekazania: val('data_przekazania'),
     podpis_zdajacy: val('podpis_zdajacy'),
@@ -565,8 +521,7 @@ async function submitForm() {
 
 function resetForm() {
   ['lokalizacja','miasto','ulica','opis_miejsca','nr_seryjny','nr_old','nr_as',
-   'kasa_tuby','nr_ser_wrzutnik','nr_stiker','licznik_total','kasa_total',
-   'nr_tid_demontowany','nr_tid_montowany','uwagi','data_przekazania',
+   'uwagi','data_przekazania',
    'podpis_zdajacy','podpis_odbierajacy'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('model').value = '';
   document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
