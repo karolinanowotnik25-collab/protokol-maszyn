@@ -141,6 +141,7 @@
   .col-lp { width: 32px; text-align: center; color: var(--muted); }
   .col-qty { width: 90px; }
   .col-gram { width: 80px; }
+  .col-date { width: 110px; }
   .col-ean { width: 130px; }
   .col-del { width: 30px; text-align: center; }
   table { table-layout: fixed; width: 100%; }
@@ -221,6 +222,24 @@
 </header>
 
 <div class="wrap">
+  <div id="draftBanner" style="display:none;" class="card" >
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="font-size:0.88rem;color:var(--navy);">
+        📝 Przywrócono niewysłany szkic zapisany lokalnie <span id="draftTime" style="color:var(--muted);"></span>
+      </div>
+      <button type="button" class="btn btn-outline" id="clearDraftBtn" style="padding:6px 14px;font-size:0.8rem;">Usuń szkic i zacznij od nowa</button>
+    </div>
+  </div>
+
+  <div id="queueBanner" style="display:none;" class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="font-size:0.88rem;color:var(--navy);">
+        📡 <span id="queueCount">0</span> protokół(y) czeka(ją) na wysłanie — zostaną wysłane automatycznie, gdy pojawi się internet.
+      </div>
+      <button type="button" class="btn btn-gold" id="flushQueueBtn" style="padding:6px 14px;font-size:0.8rem;">Spróbuj wysłać teraz</button>
+    </div>
+  </div>
+
   <form id="magazynForm">
 
     <div class="card">
@@ -271,6 +290,7 @@
             <th class="col-ean">Kod EAN zbiorczy</th>
             <th>Nazwa handlowa produktu</th>
             <th class="col-gram">Gramatura</th>
+            <th class="col-date">Data ważności</th>
             <th class="col-qty">Ilość w opak. zbiorczym</th>
             <th class="col-qty">Ilość zgrzewek na magazynie</th>
             <th class="col-qty">Ilość sztuk łącznie</th>
@@ -289,7 +309,11 @@
     <div class="card">
       <h2>Uwagi</h2>
       <div class="field">
-        <label>Uwagi dotyczące stanu magazynu / rozbieżności</label>
+        <label>Rozbieżności ze stanem systemowym firmy przekazującej (jeśli dotyczy)</label>
+        <textarea id="rozbieznosci" placeholder="np. wg systemu firmy przekazującej powinno być 120 szt., faktycznie policzono 112 szt."></textarea>
+      </div>
+      <div class="field">
+        <label>Uwagi dotyczące stanu magazynu</label>
         <textarea id="uwagi"></textarea>
       </div>
     </div>
@@ -341,6 +365,7 @@ function addRow(prefill) {
     <td class="col-ean"><input type="text" class="f-ean-zbior" value="${prefill && prefill.eanZbiorczy ? escapeHtml(prefill.eanZbiorczy) : ''}" placeholder="EAN zbiorczy"></td>
     <td><input type="text" class="f-nazwa" value="${prefill && prefill.name ? escapeHtml(prefill.name) : ''}" placeholder="Nazwa produktu"></td>
     <td class="col-gram"><input type="text" class="f-gramatura" value="${prefill && prefill.gramatura ? escapeHtml(prefill.gramatura) : ''}" placeholder="np. 250g"></td>
+    <td class="col-date"><input type="date" class="f-data-waznosci" value="${prefill && prefill.dataWaznosci ? escapeHtml(prefill.dataWaznosci) : ''}"></td>
     <td class="col-qty"><input type="number" class="f-ilosc-opak" min="0" step="1" value="${prefill && prefill.iloscOpak ? prefill.iloscOpak : ''}" placeholder="szt./zgrzewka"></td>
     <td class="col-qty"><input type="number" class="f-zgrzewki" min="0" step="1" value="${prefill && prefill.zgrzewki ? prefill.zgrzewki : ''}" placeholder="liczba zgrzewek"></td>
     <td class="col-qty"><input type="number" class="f-sztuki-lacznie" min="0" step="1" readonly tabindex="-1" placeholder="0" style="background:#f4f5f7;color:var(--muted);"></td>
@@ -410,8 +435,148 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('.card')?.querySelector('.scanner-box') === undefined) return;
 });
 
-// start with one empty row
+// ── Zapis lokalny (szkic) + kolejka offline ──
+const DRAFT_KEY = 'magazyn_draft_v1';
+const QUEUE_KEY = 'magazyn_queue_v1';
+const HEADER_FIELDS = ['firmaPrzejmowana','dataInwentaryzacji','adresMagazynu','numerProtokolu','osobaPrzekazujaca','osobaPrzejmujaca','rozbieznosci','uwagi'];
+
+function collectItems() {
+  const items = [];
+  itemsBody.querySelectorAll('tr').forEach(tr => {
+    items.push({
+      nazwa: tr.querySelector('.f-nazwa').value.trim(),
+      gramatura: tr.querySelector('.f-gramatura').value.trim(),
+      dataWaznosci: tr.querySelector('.f-data-waznosci').value,
+      iloscOpak: tr.querySelector('.f-ilosc-opak').value,
+      zgrzewkiNaMagazynie: tr.querySelector('.f-zgrzewki').value,
+      sztukiLacznie: tr.querySelector('.f-sztuki-lacznie').value,
+      eanJednostkowy: tr.querySelector('.f-ean-jedn').value.trim(),
+      eanZbiorczy: tr.querySelector('.f-ean-zbior').value.trim()
+    });
+  });
+  return items;
+}
+
+function saveDraft() {
+  try {
+    const header = {};
+    HEADER_FIELDS.forEach(id => header[id] = document.getElementById(id).value);
+    const draft = { header, items: collectItems(), savedAt: new Date().toISOString() };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch (e) { /* localStorage niedostępny — ignorujemy, nie blokujemy formularza */ }
+}
+
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+}
+
+function restoreDraftIfAny() {
+  let draft;
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    draft = JSON.parse(raw);
+  } catch (e) { return; }
+  if (!draft || (!draft.header && !draft.items)) return;
+
+  HEADER_FIELDS.forEach(id => {
+    if (draft.header && draft.header[id]) document.getElementById(id).value = draft.header[id];
+  });
+
+  if (draft.items && draft.items.length) {
+    itemsBody.innerHTML = '';
+    rowCounter = 0;
+    draft.items.forEach(it => addRow({
+      name: it.nazwa, gramatura: it.gramatura, dataWaznosci: it.dataWaznosci, iloscOpak: it.iloscOpak,
+      zgrzewki: it.zgrzewkiNaMagazynie, eanJednostkowy: it.eanJednostkowy, eanZbiorczy: it.eanZbiorczy
+    }));
+  }
+
+  const banner = document.getElementById('draftBanner');
+  banner.style.display = 'block';
+  if (draft.savedAt) {
+    const d = new Date(draft.savedAt);
+    document.getElementById('draftTime').textContent = '(' + d.toLocaleString('pl-PL') + ')';
+  }
+}
+
+document.getElementById('clearDraftBtn').addEventListener('click', () => {
+  clearDraft();
+  document.getElementById('draftBanner').style.display = 'none';
+  itemsBody.innerHTML = '';
+  rowCounter = 0;
+  HEADER_FIELDS.forEach(id => document.getElementById(id).value = '');
+  addRow();
+});
+
+// autosave draft on any change
+document.getElementById('magazynForm').addEventListener('input', () => saveDraft());
+
+function getQueue() {
+  try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch (e) { return []; }
+}
+function setQueue(q) {
+  try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch (e) {}
+}
+function addToQueue(payload) {
+  const q = getQueue();
+  q.push({ id: (Date.now() + '_' + Math.random().toString(36).slice(2)), payload });
+  setQueue(q);
+  updateQueueBanner();
+}
+function updateQueueBanner() {
+  const q = getQueue();
+  const banner = document.getElementById('queueBanner');
+  if (q.length > 0) {
+    banner.style.display = 'block';
+    document.getElementById('queueCount').textContent = q.length;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+async function sendPayload(payload) {
+  await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+}
+
+async function flushQueue() {
+  const q = getQueue();
+  if (q.length === 0) return;
+  const flushBtn = document.getElementById('flushQueueBtn');
+  if (flushBtn) { flushBtn.disabled = true; flushBtn.textContent = 'Wysyłanie...'; }
+
+  const remaining = [];
+  for (const entry of q) {
+    try {
+      await sendPayload(entry.payload);
+    } catch (e) {
+      remaining.push(entry);
+    }
+  }
+  setQueue(remaining);
+  updateQueueBanner();
+  if (flushBtn) { flushBtn.disabled = false; flushBtn.textContent = 'Spróbuj wysłać teraz'; }
+  if (remaining.length === 0) {
+    showToast('Wszystkie oczekujące protokoły zostały wysłane', 'success');
+  }
+}
+
+document.getElementById('flushQueueBtn').addEventListener('click', flushQueue);
+window.addEventListener('online', () => {
+  showToast('Połączenie wróciło — wysyłam oczekujące protokoły', 'success');
+  flushQueue();
+});
+
+// start with one empty row, then restore draft/queue state if present
 addRow();
+restoreDraftIfAny();
+updateQueueBanner();
+if (navigator.onLine) flushQueue();
 
 document.getElementById('magazynForm').addEventListener('submit', async function (e) {
   e.preventDefault();
@@ -419,27 +584,19 @@ document.getElementById('magazynForm').addEventListener('submit', async function
   const submitBtn = document.getElementById('submitBtn');
   const statusMsg = document.getElementById('statusMsg');
 
-  const items = [];
-  itemsBody.querySelectorAll('tr').forEach(tr => {
-    const nazwa = tr.querySelector('.f-nazwa').value.trim();
-    const gramatura = tr.querySelector('.f-gramatura').value.trim();
-    const iloscOpak = tr.querySelector('.f-ilosc-opak').value;
-    const zgrzewki = tr.querySelector('.f-zgrzewki').value;
-    const sztukiLacznie = tr.querySelector('.f-sztuki-lacznie').value;
-    const eanJednostkowy = tr.querySelector('.f-ean-jedn').value.trim();
-    const eanZbiorczy = tr.querySelector('.f-ean-zbior').value.trim();
-    if (nazwa || eanJednostkowy || eanZbiorczy) {
-      items.push({
-        nazwa,
-        gramatura,
-        iloscOpak: iloscOpak ? Number(iloscOpak) : 0,
-        zgrzewkiNaMagazynie: zgrzewki ? Number(zgrzewki) : 0,
-        sztukiLacznie: sztukiLacznie ? Number(sztukiLacznie) : 0,
-        eanJednostkowy,
-        eanZbiorczy
-      });
-    }
-  });
+  const rawItems = collectItems();
+  const items = rawItems
+    .filter(it => it.nazwa || it.eanJednostkowy || it.eanZbiorczy)
+    .map(it => ({
+      nazwa: it.nazwa,
+      gramatura: it.gramatura,
+      dataWaznosci: it.dataWaznosci,
+      iloscOpak: it.iloscOpak ? Number(it.iloscOpak) : 0,
+      zgrzewkiNaMagazynie: it.zgrzewkiNaMagazynie ? Number(it.zgrzewkiNaMagazynie) : 0,
+      sztukiLacznie: it.sztukiLacznie ? Number(it.sztukiLacznie) : 0,
+      eanJednostkowy: it.eanJednostkowy,
+      eanZbiorczy: it.eanZbiorczy
+    }));
 
   if (items.length === 0) {
     showToast('Dodaj przynajmniej jedną pozycję magazynową', 'error');
@@ -454,6 +611,7 @@ document.getElementById('magazynForm').addEventListener('submit', async function
     numerProtokolu: document.getElementById('numerProtokolu').value.trim(),
     osobaPrzekazujaca: document.getElementById('osobaPrzekazujaca').value.trim(),
     osobaPrzejmujaca: document.getElementById('osobaPrzejmujaca').value.trim(),
+    rozbieznosci: document.getElementById('rozbieznosci').value.trim(),
     uwagi: document.getElementById('uwagi').value.trim(),
     pozycje: items,
     submittedAt: new Date().toISOString()
@@ -464,21 +622,19 @@ document.getElementById('magazynForm').addEventListener('submit', async function
   statusMsg.textContent = '';
 
   try {
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
+    await sendPayload(payload);
 
+    clearDraft();
+    document.getElementById('draftBanner').style.display = 'none';
     statusMsg.textContent = 'Protokół został wysłany. Dziękujemy.';
     statusMsg.style.color = 'var(--success)';
     showToast('Protokół zapisany i wysłany', 'success');
     submitBtn.textContent = 'Wysłano ✓';
   } catch (err) {
-    statusMsg.textContent = 'Błąd wysyłki. Spróbuj ponownie lub skontaktuj się z administratorem.';
+    addToQueue(payload);
+    statusMsg.textContent = 'Brak internetu — protokół zapisany lokalnie i wyśle się automatycznie, gdy połączenie wróci. Możesz spokojnie zamknąć tę kartę.';
     statusMsg.style.color = 'var(--danger)';
-    showToast('Błąd wysyłki formularza', 'error');
+    showToast('Brak internetu — dane zapisane lokalnie', 'error');
     submitBtn.disabled = false;
     submitBtn.textContent = 'Zapisz i wyślij protokół';
   }
