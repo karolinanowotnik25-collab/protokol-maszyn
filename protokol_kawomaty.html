@@ -124,6 +124,17 @@
   .toggle-group input[type="radio"]:checked + label { border-color: var(--gold); background: var(--gold); color: var(--navy); }
   .conn-group input[type="radio"]:checked + label { border-color: var(--navy); background: var(--navy); color: var(--white); }
 
+  .checkbox-label {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    font-size: 14px; font-weight: 600; color: var(--navy-mid); text-transform: none; letter-spacing: 0;
+    padding: 10px 12px; background: var(--gray-100); border: 1.5px solid var(--gray-200); border-radius: 7px;
+    transition: border-color .15s, background .15s;
+  }
+  .checkbox-label:has(input:checked) { border-color: var(--gold); background: #FBF3E2; }
+  .checkbox-label input[type="checkbox"] {
+    width: 19px; height: 19px; accent-color: var(--gold); cursor: pointer; flex-shrink: 0;
+  }
+
   .products-intro { padding: 11px 16px 0; font-size: 12.5px; color: var(--gray-400); }
   .products-table-wrap { padding: 13px 16px 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
@@ -240,17 +251,24 @@
     <div class="section-body">
       <div class="field full">
         <label>Model maszyny</label>
-        <select id="model">
-          <option value="">— wybierz model —</option>
-          <option value="Luce">Kawomat 1</option>
-          <option value="Fas">Kawomat 2</option>
-          <option value="Ekspres De Longhi Eletta ECAM">Ekspres </option>
-          <option value="Dystrybutor do wody Prime Eco Star">Dystrybutor</option>
-        </select>
+        <input type="text" id="model" list="model-list" placeholder="np. Kawomat 1, Ekspres, Dystrybutor lub inny model" autocomplete="off">
+        <datalist id="model-list">
+          <option value="Kawomat 1">
+          <option value="Kawomat 2">
+          <option value="Ekspres">
+          <option value="Dystrybutor">
+        </datalist>
       </div>
       <div class="field"><label>Numer seryjny automatu</label><input type="text" id="nr_seryjny" placeholder="np. 43901300"></div>
       <div class="field"><label>Numer Old</label><input type="text" id="nr_old" placeholder="opcjonalny"></div>
       <div class="field"><label>Numer Automat Spec</label><input type="text" id="nr_as" placeholder="np. GA 4646"></div>
+      <div class="field">
+        <label>Czytnik kart płatniczych?</label>
+        <div class="toggle-group">
+          <input type="radio" name="czytnik_kart" id="ck_tak" value="TAK"><label for="ck_tak">TAK</label>
+          <input type="radio" name="czytnik_kart" id="ck_nie" value="NIE"><label for="ck_nie">NIE</label>
+        </div>
+      </div>
       <div class="field full">
         <label>Typ maszyny</label>
         <div class="conn-group">
@@ -259,6 +277,18 @@
           <input type="radio" name="typ_maszyny" id="tm_dystrybutor" value="Dystrybutor"><label for="tm_dystrybutor">Dystrybutor</label>
           <input type="radio" name="typ_maszyny" id="tm_inny" value="Inny"><label for="tm_inny">Inny</label>
         </div>
+      </div>
+      <div class="field full">
+        <label class="checkbox-label">
+          <input type="checkbox" id="czytnik_wymieniony_as">
+          <span>Czytnik wymieniony na czytnik AS</span>
+        </label>
+      </div>
+      <div class="field full">
+        <label class="checkbox-label">
+          <input type="checkbox" id="maszyna_do_wymiany">
+          <span>Maszyna do wymiany</span>
+        </label>
       </div>
     </div>
   </div>
@@ -461,6 +491,7 @@ function initTables() {
 function collectFormData() {
   const val = id => (document.getElementById(id) || {}).value || '';
   const radio = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ''; };
+  const checkbox = id => { const el = document.getElementById(id); return el && el.checked ? 'TAK' : 'NIE'; };
   return {
     lokalizacja: val('lokalizacja'),
     miasto: val('miasto'),
@@ -470,7 +501,10 @@ function collectFormData() {
     nr_seryjny: val('nr_seryjny'),
     nr_old: val('nr_old'),
     nr_as: val('nr_as'),
+    czytnik_kart: radio('czytnik_kart'),
     typ_maszyny: radio('typ_maszyny'),
+    czytnik_wymieniony_as: checkbox('czytnik_wymieniony_as'),
+    maszyna_do_wymiany: checkbox('maszyna_do_wymiany'),
     uwagi: val('uwagi'),
     data_przekazania: val('data_przekazania'),
     podpis_zdajacy: val('podpis_zdajacy'),
@@ -524,6 +558,7 @@ function resetForm() {
    'podpis_zdajacy','podpis_odbierajacy'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('model').value = '';
   document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+  document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
   document.getElementById('tbody-kawomat-config').innerHTML = '';
   document.getElementById('tbody-kawomat-produkty').innerHTML = '';
   initTables();
