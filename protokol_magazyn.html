@@ -385,7 +385,7 @@ function addRow(prefill) {
     <td class="col-date"><input type="date" class="f-data-waznosci" value="${prefill && prefill.dataWaznosci ? escapeHtml(prefill.dataWaznosci) : ''}"></td>
     <td class="col-qty"><input type="number" class="f-ilosc-opak" min="0" step="1" value="${prefill && prefill.iloscOpak ? prefill.iloscOpak : ''}" placeholder="szt./zgrzewka"></td>
     <td class="col-qty"><input type="number" class="f-zgrzewki" min="0" step="1" value="${prefill && prefill.zgrzewki ? prefill.zgrzewki : ''}" placeholder="liczba zgrzewek"></td>
-    <td class="col-qty"><input type="number" class="f-sztuki-lacznie" min="0" step="1" readonly tabindex="-1" placeholder="0" style="background:#f4f5f7;color:var(--muted);"></td>
+    <td class="col-qty"><input type="number" class="f-sztuki-lacznie" min="0" step="1" placeholder="wpisz ręcznie lub wylicz z opak.×zgrz."></td>
     <td class="col-del"><button type="button" class="btn-del" title="Usuń pozycję">✕</button></td>
   `;
 
@@ -393,10 +393,14 @@ function addRow(prefill) {
   const zgrzewkiInput = tr.querySelector('.f-zgrzewki');
   const sztukiInput = tr.querySelector('.f-sztuki-lacznie');
 
+  // Jeśli są zgrzewki: ilość sztuk wylicza się sama z opak. × zgrzewki.
+  // Jeśli nie ma zgrzewek (produkt luzem): pole jest zwykłym polem do ręcznego wpisania.
   function recalcSztuki() {
     const opak = parseFloat(iloscOpakInput.value) || 0;
     const zgrz = parseFloat(zgrzewkiInput.value) || 0;
-    sztukiInput.value = (opak * zgrz) || '';
+    if (opak && zgrz) {
+      sztukiInput.value = opak * zgrz;
+    }
   }
   iloscOpakInput.addEventListener('input', recalcSztuki);
   zgrzewkiInput.addEventListener('input', recalcSztuki);
